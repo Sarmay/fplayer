@@ -194,6 +194,7 @@ class VideoScreenState extends State<VideoScreen> {
                     videoIndex += 1;
                   });
                 },
+                settingIcon: Icons.cast_connected,
                 settingFun: () {
                   print('设置按钮点击事件');
                 },
