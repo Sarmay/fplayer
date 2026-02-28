@@ -53,7 +53,7 @@ FPanelWidgetBuilder fPanelBuilder({
   final void Function()? onVideoEnd,
 
   /// 视频完成后台任务到稳定期
-  final void Function()? onVideoPrepared,
+  final void Function(Size?)? onVideoPrepared,
 
   /// 视频时间更新
   final void Function()? onVideoTimeChange,
@@ -135,7 +135,7 @@ class _FPanel2 extends StatefulWidget {
   final void Function()? settingFun;
   final void Function()? onError;
   final void Function()? onVideoEnd;
-  final void Function()? onVideoPrepared;
+  final void Function(Size?)? onVideoPrepared;
   final void Function()? onVideoTimeChange;
 
   const _FPanel2({
@@ -269,13 +269,6 @@ class __FPanel2State extends State<_FPanel2> {
   int batteryLevel = 0;
   late Timer batteryTimer;
 
-  static const FSliderColors sliderColors = FSliderColors(
-    cursorColor: Color(0xFF07B9B9),
-    playedColor: Color(0xFF07B9B9),
-    baselineColor: Color(0xFFD8D8D8),
-    bufferedColor: Color(0xFF787878),
-  );
-
   @override
   void initState() {
     super.initState();
@@ -393,12 +386,26 @@ class __FPanel2State extends State<_FPanel2> {
     player.removeListener(_playerValueChanged);
   }
 
+  FSliderColors sliderColors(context) {
+    FSliderColors sliderColorsItem = FSliderColors(
+      cursorColor: Theme.of(context).primaryColor,
+      playedColor: Theme.of(context).primaryColor,
+      baselineColor: const Color(0xFFD8D8D8),
+      bufferedColor: const Color(0xFF787878),
+    );
+    return sliderColorsItem;
+  }
+
   getBatteryLevel() async {
-    final level = await battery.batteryLevel;
-    if (mounted) {
-      setState(() {
-        batteryLevel = level;
-      });
+    try {
+      final level = await battery.batteryLevel;
+      if (mounted) {
+        setState(() {
+          batteryLevel = level;
+        });
+      }
+    } catch (e) {
+      print("电池报错:$e");
     }
   }
 
@@ -436,7 +443,7 @@ class __FPanel2State extends State<_FPanel2> {
     bool playStatePrepared = valueState == FState.prepared;
     if (_playStatePrepared != playStatePrepared) {
       if (playStatePrepared) {
-        widget.onVideoPrepared?.call();
+        widget.onVideoPrepared?.call(value.size);
       }
       _playStatePrepared = playStatePrepared;
     }
@@ -929,7 +936,7 @@ class __FPanel2State extends State<_FPanel2> {
     return Padding(
       padding: const EdgeInsets.only(left: 3),
       child: FSlider(
-        colors: sliderColors,
+        colors: sliderColors(context),
         value: currentValue,
         cacheValue: bufferPos,
         min: 0.0,

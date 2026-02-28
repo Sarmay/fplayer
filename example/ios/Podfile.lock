@@ -2,7 +2,7 @@ PODS:
   - battery_plus (1.0.0):
     - Flutter
   - Flutter (1.0.0)
-  - fplayer (0.0.1):
+  - fplayer (1.1.3):
     - Flutter
     - fplayer-core (= 1.0.4)
   - fplayer-core (1.0.4)
@@ -17,7 +17,7 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - fplayer (from `.symlinks/plugins/fplayer/ios`)
   - screen_brightness_ios (from `.symlinks/plugins/screen_brightness_ios/ios`)
-  - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/ios`)
+  - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
 
 SPEC REPOS:
   trunk:
@@ -33,16 +33,16 @@ EXTERNAL SOURCES:
   screen_brightness_ios:
     :path: ".symlinks/plugins/screen_brightness_ios/ios"
   shared_preferences_foundation:
-    :path: ".symlinks/plugins/shared_preferences_foundation/ios"
+    :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
 
 SPEC CHECKSUMS:
-  battery_plus: 7851ab482c336dd101ae735dc9363f01e1223c7c
-  Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
-  fplayer: 8dd9f9bc871e8e9ef5a94840cd29a62d8f6d5e52
-  fplayer-core: b7a0256f8e5e034644e92a3234bc557f1613b13f
-  screen_brightness_ios: 715ca807df953bf676d339f11464e438143ee625
-  shared_preferences_foundation: 986fc17f3d3251412d18b0265f9c64113a8c2472
+  battery_plus: 34f72fa2afeeea83bbae306c72a25828d3ec727a
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  fplayer: e83d973b204901def1acd5dda84295037d81a16f
+  fplayer-core: b98b1e7a7a6bc771376ba6a1f660499389d8abf5
+  screen_brightness_ios: 6a6f7794b67f07c4f1e24f6374b2d8ad367ffb39
+  shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6
 
-PODFILE CHECKSUM: 663715e941f9adb426e33bf9376914006f9ea95b
+PODFILE CHECKSUM: d85ddc5f90e8c593f9dc16ef40fc88253b4f8f6b
 
-COCOAPODS: 1.12.0
+COCOAPODS: 1.16.2

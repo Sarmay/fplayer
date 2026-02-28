@@ -32,7 +32,7 @@ class VideoScreenState extends State<VideoScreen> {
     VideoItem(
       title: '第三集',
       subTitle: '视频3副标题',
-      url: 'http://player.alicdn.com/video/aliyunmedia.mp4',
+      url: 'https://cdn.wlcdn88.com:777/dfc69d3a/index.m3u8',
     ),
     VideoItem(
       title: '第四集',
@@ -220,7 +220,8 @@ class VideoScreenState extends State<VideoScreen> {
                 onVideoTimeChange: () {
                   // 视频时间变动则触发一次，可以保存视频播放历史
                 },
-                onVideoPrepared: () async {
+                onVideoPrepared: (Size? size) async {
+                  print("视频初始化完毕，如有历史记录时间段则可以触发快进:${size}");
                   // 视频初始化完毕，如有历史记录时间段则可以触发快进
                   try {
                     if (seekTime >= 1) {

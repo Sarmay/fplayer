@@ -26,7 +26,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: const Color(0xFF07B9B9),
+        primaryColor: Colors.red,
         primaryColorDark: const Color(0xFFFFFFFF),
         primaryColorLight: const Color(0x33000000),
         textButtonTheme: TextButtonThemeData(
