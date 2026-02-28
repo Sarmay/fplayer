@@ -3,8 +3,8 @@
 # Run `pod lib lint fplayer.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
-  s.name             = 'fplayer'
-  s.version          = '1.1.3'
+  s.name             = 'sarmay_fplayer'
+  s.version          = '1.1.5'
   s.summary          = 'A new Flutter plugin project.'
   s.description      = <<-DESC
 A new Flutter plugin project.

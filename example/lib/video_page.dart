@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:fplayer/fplayer.dart';
+import 'package:sarmay_fplayer/fplayer.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 
 import 'app_bar.dart';

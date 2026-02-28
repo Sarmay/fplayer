@@ -20,7 +20,7 @@ dependencies:
 
   streaming_shared_preferences: ^2.0.0
 
-  fplayer:
+  sarmay_fplayer:
     # When depending on this package from a real application you should use:
     #   fplayer: ^x.y.z
     # See https://dart.dev/tools/pub/dependencies#version-constraints
