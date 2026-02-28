@@ -43,6 +43,9 @@ FPanelWidgetBuilder fPanelBuilder({
   /// 清晰度列表
   final Map<String, ResolutionItem>? resolutionList,
 
+  /// 设置图标
+  final IconData settingIcon = Icons.settings,
+
   /// 设置点击事件
   final void Function()? settingFun,
 
@@ -82,6 +85,7 @@ FPanelWidgetBuilder fPanelBuilder({
       speedList: speedList,
       isResolution: isResolution,
       resolutionList: resolutionList,
+      settingIcon: settingIcon,
       settingFun: settingFun,
       onError: onError,
       onVideoEnd: onVideoEnd,
@@ -131,6 +135,7 @@ class _FPanel2 extends StatefulWidget {
   final bool isCaption;
   final Map<String, double>? speedList;
   final bool isResolution;
+  final IconData settingIcon;
   final Map<String, ResolutionItem>? resolutionList;
   final void Function()? settingFun;
   final void Function()? onError;
@@ -157,6 +162,7 @@ class _FPanel2 extends StatefulWidget {
     this.isCaption = false,
     this.isResolution = false,
     this.settingFun,
+    this.settingIcon = Icons.settings,
     this.videoIndex = 0,
     this.playNextVideoFun,
     this.resolutionList,
@@ -985,7 +991,7 @@ class __FPanel2State extends State<_FPanel2> {
     } else {
       return Row(
         children: <Widget>[
-          buildBack(context),
+          // buildBack(context),
           Expanded(child: Container()),
           buildSetting(context),
         ],
@@ -1171,7 +1177,8 @@ class __FPanel2State extends State<_FPanel2> {
                 });
               },
               child: Container(
-                padding: const EdgeInsets.all(10),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 30),
                 decoration: BoxDecoration(
                   color: Theme.of(context).primaryColorLight,
                   borderRadius: const BorderRadius.all(Radius.circular(5)),
@@ -1626,13 +1633,9 @@ class __FPanel2State extends State<_FPanel2> {
   Widget buildSetting(BuildContext context) {
     return IconButton(
       padding: EdgeInsets.zero,
-      icon: Transform.rotate(
-        angle: pi / 2,
-        alignment: Alignment.center,
-        child: Icon(
-          Icons.tune_rounded,
-          color: Theme.of(context).primaryColor,
-        ),
+      icon: Icon(
+        widget.settingIcon,
+        color: Theme.of(context).primaryColor,
       ),
       onPressed: widget.settingFun,
     );

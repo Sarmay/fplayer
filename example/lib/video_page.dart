@@ -82,6 +82,8 @@ class VideoScreenState extends State<VideoScreen> {
   // 模拟播放记录视频初始化完需要跳转的进度
   int seekTime = 100000;
 
+  double videoAspectRatio = 16 / 9;
+
   VideoScreenState();
 
   @override
@@ -122,7 +124,7 @@ class VideoScreenState extends State<VideoScreen> {
   Widget build(BuildContext context) {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
     Size size = mediaQueryData.size;
-    double videoHeight = size.width * 9 / 16;
+    double videoHeight = size.width / videoAspectRatio;
     return Scaffold(
       appBar: const FAppBar.defaultSetting(title: "Video"),
       body: SingleChildScrollView(
@@ -221,6 +223,10 @@ class VideoScreenState extends State<VideoScreen> {
                   // 视频时间变动则触发一次，可以保存视频播放历史
                 },
                 onVideoPrepared: (Size? size) async {
+                  if (size != null) {
+                    videoAspectRatio = size.aspectRatio;
+                    setState(() {});
+                  }
                   print("视频初始化完毕，如有历史记录时间段则可以触发快进:${size}");
                   // 视频初始化完毕，如有历史记录时间段则可以触发快进
                   try {
