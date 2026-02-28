@@ -1,7 +1,7 @@
-name: fplayer
+name: sarmay_fplayer
 description: A Video Player Flutter plugin based on fplayer-core, support most popular protocols and codecs.
 version: 1.1.4
-homepage: https://github.com/FlutterPlayer/fplayer.git
+homepage: https://github.com/Sarmay/fplayer.git
 
 environment:
   sdk: '>=2.18.0 <3.0.0'
