@@ -220,8 +220,9 @@ class VideoScreenState extends State<VideoScreen> {
                     setVideoUrl(videoList[index].url);
                   }
                 },
-                onVideoTimeChange: () {
+                onVideoTimeChange: (Duration d) {
                   // 视频时间变动则触发一次，可以保存视频播放历史
+                  print("当前进度：${d.inSeconds}");
                 },
                 onVideoPrepared: (Size? size) async {
                   if (size != null) {

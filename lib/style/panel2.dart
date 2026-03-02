@@ -59,7 +59,7 @@ FPanelWidgetBuilder fPanelBuilder({
   final void Function(Size?)? onVideoPrepared,
 
   /// 视频时间更新
-  final void Function()? onVideoTimeChange,
+  final void Function(Duration)? onVideoTimeChange,
 }) {
   return (FPlayer player, FData data, BuildContext context, Size viewSize,
       Rect texturePos) {
@@ -141,7 +141,7 @@ class _FPanel2 extends StatefulWidget {
   final void Function()? onError;
   final void Function()? onVideoEnd;
   final void Function(Size?)? onVideoPrepared;
-  final void Function()? onVideoTimeChange;
+  final void Function(Duration)? onVideoTimeChange;
 
   const _FPanel2({
     Key? key,
@@ -335,7 +335,7 @@ class __FPanel2State extends State<_FPanel2> {
       _needClearSeekData = false;
       // 每n次才进入一次不然太频繁发送处理业务太复杂则会增加消耗
       if (sendCount % 50 == 0) {
-        widget.onVideoTimeChange?.call();
+        widget.onVideoTimeChange?.call(v);
       }
       sendCount++;
     });
