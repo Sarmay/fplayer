@@ -61,7 +61,7 @@ class FVolume {
   /// Mute system volume.
   /// return system volume after mute
   static Future<double> mute() async {
-    var vol = await FPlugin._channel.invokeMethod("volumeMute");
+    var vol = await FplayerPlatform.instance.volumeMute();
     if (vol != null) return Future.value(vol);
     return Future.value(0);
   }
@@ -74,17 +74,16 @@ class FVolume {
       return Future.error(ArgumentError.value(
           vol, "step must be not null and in range [0.0, 1.0]"));
     } else {
-      var afterSet = await FPlugin._channel
-          .invokeMethod("volumeSet", <String, dynamic>{'vol': vol});
+      var afterSet = await FplayerPlatform.instance.volumeSet(vol);
       if (afterSet != null) return Future.value(afterSet);
       return Future.value(0);
     }
   }
 
-  /// get ths current system volume.
+  /// get the current system volume.
   /// the range of returned value is [0.0, 1.0].
   static Future<double> getVol() async {
-    var vol = await FPlugin._channel.invokeMethod("systemVolume");
+    var vol = await FplayerPlatform.instance.systemVolume();
     if (vol != null) return Future.value(vol);
     return Future.value(0);
   }
@@ -97,8 +96,7 @@ class FVolume {
       return Future.error(ArgumentError.value(
           step, "step must be not null and in range [0.0, 1.0]"));
     } else {
-      var vol = await FPlugin._channel
-          .invokeMethod("volumeUp", <String, dynamic>{'step': step});
+      var vol = await FplayerPlatform.instance.volumeUp(step: step);
       if (vol != null) return Future.value(vol);
       return Future.value(0);
     }
@@ -112,8 +110,7 @@ class FVolume {
       return Future.error(ArgumentError.value(
           step, "step must be not null and in range [0.0, 1.0]"));
     } else {
-      var vol = await FPlugin._channel
-          .invokeMethod("volumeDown", <String, dynamic>{'step': step});
+      var vol = await FplayerPlatform.instance.volumeDown(step: step);
       if (vol != null) return Future.value(vol);
       return Future.value(0);
     }
@@ -126,8 +123,7 @@ class FVolume {
     if (mode < hideUIWhenPlayable || hideUIWhenPlayable > alwaysShowUI) {
       return Future.error(ArgumentError.notNull("mode"));
     } else {
-      return FPlugin._channel
-          .invokeMethod("volUiMode", <String, dynamic>{'mode': mode});
+      return FplayerPlatform.instance.volUiMode(mode);
     }
   }
 
