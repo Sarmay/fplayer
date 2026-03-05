@@ -224,12 +224,8 @@ class VideoScreenState extends State<VideoScreen> {
                   // 视频时间变动则触发一次，可以保存视频播放历史
                   print("当前进度：${d.inSeconds}");
                 },
-                onVideoPrepared: (Size? size) async {
-                  // if (size != null) {
-                  //   videoAspectRatio = size.aspectRatio;
-                  //   setState(() {});
-                  // }
-                  print("视频初始化完毕，如有历史记录时间段则可以触发快进:${size}");
+                onVideoPrepared: () async {
+                  print("视频初始化完毕，如有历史记录时间段则可以触发快进");
                   // 视频初始化完毕，如有历史记录时间段则可以触发快进
                   try {
                     if (seekTime >= 1) {
