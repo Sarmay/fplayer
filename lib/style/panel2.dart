@@ -60,6 +60,9 @@ FPanelWidgetBuilder fPanelBuilder({
 
   /// 视频时间更新
   final void Function(Duration)? onVideoTimeChange,
+
+  /// 视频状态变更
+  final void Function(FState, bool)? onVideoStateChange,
 }) {
   return (FPlayer player, FData data, BuildContext context, Size viewSize,
       Rect texturePos) {
@@ -91,6 +94,7 @@ FPanelWidgetBuilder fPanelBuilder({
       onVideoEnd: onVideoEnd,
       onVideoPrepared: onVideoPrepared,
       onVideoTimeChange: onVideoTimeChange,
+      onVideoStateChange: onVideoStateChange,
     );
   };
 }
@@ -142,6 +146,7 @@ class _FPanel2 extends StatefulWidget {
   final void Function()? onVideoEnd;
   final void Function()? onVideoPrepared;
   final void Function(Duration)? onVideoTimeChange;
+  final void Function(FState, bool)? onVideoStateChange;
 
   const _FPanel2({
     Key? key,
@@ -171,6 +176,7 @@ class _FPanel2 extends StatefulWidget {
     this.onVideoEnd,
     this.onVideoPrepared,
     this.onVideoTimeChange,
+    this.onVideoStateChange,
   })  : assert(hideDuration > 0 && hideDuration < 10000),
         super(key: key);
 
@@ -215,6 +221,9 @@ class __FPanel2State extends State<_FPanel2> {
 
   /// 视频状态是否执行完成成为稳定状态与_prepared不一致
   bool _playStatePrepared = false;
+
+  /// 上一次播放器状态
+  FState _lastState = FState.idle;
 
   /// 是否在加载中
   bool _buffering = false;
@@ -365,6 +374,9 @@ class __FPanel2State extends State<_FPanel2> {
       setState(() {
         _buffering = value;
       });
+
+      /// 缓冲状态变化时触发回调
+      widget.onVideoStateChange?.call(player.state, value);
     });
 
     /// 视频卡顿当缓冲量回调
@@ -452,6 +464,12 @@ class __FPanel2State extends State<_FPanel2> {
         widget.onVideoPrepared?.call();
       }
       _playStatePrepared = playStatePrepared;
+    }
+
+    /// 播放器状态变更回调
+    if (_lastState != valueState) {
+      widget.onVideoStateChange?.call(valueState, _buffering);
+      _lastState = valueState;
     }
 
     /// 播放完成是否播放下一集

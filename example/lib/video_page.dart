@@ -239,6 +239,30 @@ class VideoScreenState extends State<VideoScreen> {
                     print("视频初始化完快进-异常: $error");
                   }
                 },
+                onVideoStateChange: (FState state, bool isBuffering) {
+                  print('播放器状态: $state, 缓冲中: $isBuffering');
+
+                  switch (state) {
+                    case FState.started:
+                      // 视频开始播放
+                      break;
+                    case FState.paused:
+                      // 视频已暂停
+                      break;
+                    case FState.stopped:
+                      // 视频已停止
+                      break;
+                    case FState.error:
+                      // 播放出错
+                      break;
+                    default:
+                      break;
+                  }
+
+                  if (isBuffering) {
+                    // 视频正在缓冲
+                  }
+                },
               ),
             ),
             // 自定义小屏列表
