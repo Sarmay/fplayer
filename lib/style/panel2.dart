@@ -1177,8 +1177,7 @@ class __FPanel2State extends State<_FPanel2> {
                 });
               },
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 30),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Theme.of(context).primaryColorLight,
                   borderRadius: const BorderRadius.all(Radius.circular(5)),
@@ -1392,7 +1391,7 @@ class __FPanel2State extends State<_FPanel2> {
             "缓冲中 $_bufferingPro %",
             style: const TextStyle(
               color: Colors.white70,
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1452,7 +1451,8 @@ class __FPanel2State extends State<_FPanel2> {
   }
 
   Rect panelRect() {
-    Rect rect = Rect.fromLTWH(0, 0, widget.viewSize.width, widget.viewSize.height);
+    Rect rect =
+        Rect.fromLTWH(0, 0, widget.viewSize.width, widget.viewSize.height);
     return rect;
   }
 
@@ -1649,7 +1649,7 @@ class __FPanel2State extends State<_FPanel2> {
               "加载中...",
               style: TextStyle(
                 color: Colors.white70,
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1717,7 +1717,7 @@ class __FPanel2State extends State<_FPanel2> {
               "加载中...",
               style: TextStyle(
                 color: Colors.white70,
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),
