@@ -1372,20 +1372,22 @@ class __FPanel2State extends State<_FPanel2> {
 
   GestureDetector buildGestureDetector(BuildContext context) {
     double currentValue = getCurrentVideoValue();
-    Widget videoLoading = Container(); // 视频缓冲
+    Widget videoLoading = Container();
     if (_buffering) {
       videoLoading = Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Container(
-            width: 25,
-            height: 25,
-            margin: const EdgeInsets.only(bottom: 10),
-            child: const CircularProgressIndicator(
-              backgroundColor: Color.fromRGBO(250, 250, 250, 0.5),
-              valueColor: AlwaysStoppedAnimation(Colors.white70),
+          SizedBox(
+            width: 30,
+            height: 30,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation(
+                Theme.of(context).primaryColor,
+              ),
             ),
           ),
+          const SizedBox(height: 10),
           Text(
             "缓冲中 $_bufferingPro %",
             style: const TextStyle(
@@ -1645,14 +1647,29 @@ class __FPanel2State extends State<_FPanel2> {
     if (player.state == FState.asyncPreparing) {
       return Container(
         alignment: Alignment.center,
-        child: SizedBox(
-          width: 30,
-          height: 30,
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation(
-              Theme.of(context).primaryColorDark,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            SizedBox(
+              width: 30,
+              height: 30,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation(
+                  Theme.of(context).primaryColor,
+                ),
+              ),
             ),
-          ),
+            const SizedBox(height: 10),
+            const Text(
+              "加载中...",
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       );
     } else if (_isPlayError) {
@@ -1696,20 +1713,31 @@ class __FPanel2State extends State<_FPanel2> {
       );
     } else if (!player.value.audioRenderStart &&
         !player.value.videoRenderStart) {
-      return Center(
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(5)),
-            color: Color.fromRGBO(0, 0, 0, 0.5),
-          ),
-          child: const SizedBox(
-            width: 50,
-            height: 50,
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation(Colors.white),
+      return Container(
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            SizedBox(
+              width: 30,
+              height: 30,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation(
+                  Theme.of(context).primaryColor,
+                ),
+              ),
             ),
-          ),
+            const SizedBox(height: 10),
+            const Text(
+              "加载中...",
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       );
     } else {

@@ -265,7 +265,15 @@ class _FViewState extends State<FView> {
         overlays: []);
     var orientation = MediaQuery.of(context).orientation;
     FLog.d("start enter fullscreen. orientation:$orientation");
-    await FPlugin.setOrientationLandscape();
+
+    // 根据视频宽高判断是否旋转屏幕
+    // 竖屏视频（高度 > 宽度）不旋转，其他视频旋转为横屏
+    Size? videoSize = widget.player.value.size;
+    bool isPortraitVideo =
+        videoSize != null && videoSize.height > videoSize.width;
+    if (!isPortraitVideo) {
+      await FPlugin.setOrientationLandscape();
+    }
 
     await Navigator.of(context).push(route);
     _fullScreen = false;

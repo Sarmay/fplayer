@@ -136,7 +136,7 @@ class VideoScreenState extends State<VideoScreen> {
               height: videoHeight,
               color: Colors.black,
               fsFit: FFit.contain, // 全屏模式下的填充
-              fit: FFit.fill, // 正常模式下的填充
+              fit: FFit.contain, // 正常模式下的填充
               panelBuilder: fPanelBuilder(
                 // 单视频配置
                 title: '视频标题',
@@ -225,10 +225,10 @@ class VideoScreenState extends State<VideoScreen> {
                   print("当前进度：${d.inSeconds}");
                 },
                 onVideoPrepared: (Size? size) async {
-                  if (size != null) {
-                    videoAspectRatio = size.aspectRatio;
-                    setState(() {});
-                  }
+                  // if (size != null) {
+                  //   videoAspectRatio = size.aspectRatio;
+                  //   setState(() {});
+                  // }
                   print("视频初始化完毕，如有历史记录时间段则可以触发快进:${size}");
                   // 视频初始化完毕，如有历史记录时间段则可以触发快进
                   try {
