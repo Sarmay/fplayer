@@ -261,13 +261,8 @@ class _DefaultFPanelState extends State<_DefaultFPanel> {
 
   @override
   Widget build(BuildContext context) {
-    Rect rect = player.value.fullScreen
-        ? Rect.fromLTWH(0, 0, widget.viewSize.width, widget.viewSize.height)
-        : Rect.fromLTRB(
-            max(0.0, widget.texturePos.left),
-            max(0.0, widget.texturePos.top),
-            min(widget.viewSize.width, widget.texturePos.right),
-            min(widget.viewSize.height, widget.texturePos.bottom));
+    Rect rect =
+        Rect.fromLTWH(0, 0, widget.viewSize.width, widget.viewSize.height);
     return Positioned.fromRect(
       rect: rect,
       child: GestureDetector(

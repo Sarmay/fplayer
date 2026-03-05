@@ -1452,32 +1452,16 @@ class __FPanel2State extends State<_FPanel2> {
   }
 
   Rect panelRect() {
-    Rect rect = player.value.fullScreen || (true == widget.fill)
-        ? Rect.fromLTWH(0, 0, widget.viewSize.width, widget.viewSize.height)
-        : Rect.fromLTRB(
-            max(0.0, widget.texPos.left),
-            max(0.0, widget.texPos.top),
-            min(widget.viewSize.width, widget.texPos.right),
-            min(widget.viewSize.height, widget.texPos.bottom));
+    Rect rect = Rect.fromLTWH(0, 0, widget.viewSize.width, widget.viewSize.height);
     return rect;
   }
 
   double panelHeight() {
-    if (player.value.fullScreen || (true == widget.fill)) {
-      return widget.viewSize.height;
-    } else {
-      return min(widget.viewSize.height, widget.texPos.bottom) -
-          max(0.0, widget.texPos.top);
-    }
+    return widget.viewSize.height;
   }
 
   double panelWidth() {
-    if (player.value.fullScreen || (true == widget.fill)) {
-      return widget.viewSize.width;
-    } else {
-      return min(widget.viewSize.width, widget.texPos.right) -
-          max(0.0, widget.texPos.left);
-    }
+    return widget.viewSize.width;
   }
 
   // 返回
