@@ -43,11 +43,13 @@ abstract class FplayerPlatform extends PlatformInterface {
   }
 
   Future<bool?> setOrientationPortrait() {
-    throw UnimplementedError('setOrientationPortrait() has not been implemented.');
+    throw UnimplementedError(
+        'setOrientationPortrait() has not been implemented.');
   }
 
   Future<bool?> setOrientationLandscape() {
-    throw UnimplementedError('setOrientationLandscape() has not been implemented.');
+    throw UnimplementedError(
+        'setOrientationLandscape() has not been implemented.');
   }
 
   Future<void> setOrientationAuto() {
@@ -112,5 +114,9 @@ abstract class FplayerPlatform extends PlatformInterface {
 
   Future<void> volUiMode(int mode) {
     throw UnimplementedError('volUiMode() has not been implemented.');
+  }
+
+  Future<bool?> initTexture() {
+    throw UnimplementedError('initTexture() has not been implemented.');
   }
 }

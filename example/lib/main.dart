@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:sarmay_fplayer/fplayer.dart';
 // import 'package:flutter/rendering.dart';
 
 import 'home_page.dart';
 
-void main() {
-  // debugPaintSizeEnabled = true;
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // 初始化视频播放器纹理
+  await FPlugin.initTexture();
+  runApp(MyApp());
 }
 
 class MyApp extends StatefulWidget {

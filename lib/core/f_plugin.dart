@@ -4,6 +4,36 @@ class FPlugin {
   /// Make constructor private
   const FPlugin._();
 
+  static bool _textureInitialized = false;
+
+  /// Initialize texture for video rendering.
+  /// Call this method before creating any FPlayer, typically in main() or
+  /// after WidgetsFlutterBinding.ensureInitialized().
+  /// On Android 16+, this must be called after the Flutter engine is fully ready.
+  /// 
+  /// Example:
+  /// ```dart
+  /// void main() async {
+  ///   WidgetsFlutterBinding.ensureInitialized();
+  ///   await FPlugin.initTexture();
+  ///   runApp(MyApp());
+  /// }
+  /// ```
+  static Future<void> initTexture() async {
+    if (_textureInitialized) {
+      FLog.i("initTexture: already initialized");
+      return;
+    }
+    if (Platform.isAndroid) {
+      FLog.i("initTexture: initializing texture on Android");
+      final result = await FplayerPlatform.instance.initTexture();
+      _textureInitialized = result ?? false;
+      FLog.i("initTexture: result=$_textureInitialized");
+    } else {
+      _textureInitialized = true;
+    }
+  }
+
   static Future<int> _createPlayer() async {
     final platform = FplayerPlatform.instance;
     int? pid = await platform.createPlayer();

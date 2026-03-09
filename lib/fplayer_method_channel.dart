@@ -127,4 +127,9 @@ class MethodChannelFplayer extends FplayerPlatform {
   Future<void> volUiMode(int mode) {
     return methodChannel.invokeMethod('volUiMode', {'mode': mode});
   }
+
+  @override
+  Future<bool?> initTexture() {
+    return methodChannel.invokeMethod<bool>('initTexture');
+  }
 }

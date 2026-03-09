@@ -88,6 +88,7 @@ public class FplayerPlugin implements MethodCallHandler, FlutterPlugin, Activity
     private int volumeUIMode = ALWAYS_SHOW_UI;
     private float volStep = 1.0f / 16.0f;
     private boolean eventListening = false;
+    private boolean mTextureInitialized = false;
     // non-local field prevent GC
     private EventChannel mEventChannel;
     private Object mAudioFocusRequest;
@@ -114,13 +115,6 @@ public class FplayerPlugin implements MethodCallHandler, FlutterPlugin, Activity
         final MethodChannel channel = new MethodChannel(binding.getBinaryMessenger(), "befovy.com/fijk");
         initWithBinding(binding);
         channel.setMethodCallHandler(this);
-
-        // Removed: pre-loading player causes crash on Android 16+
-        // The texture registration fails when called too early in the plugin lifecycle.
-        // IjkMediaPlayer will be loaded lazily when the first real player is created.
-        final FPlayer player = new FPlayer(this, true);
-        player.setupSurface();
-        player.release();
 
         AudioManager audioManager = audioManager();
         if (audioManager != null) {
@@ -260,6 +254,16 @@ public class FplayerPlugin implements MethodCallHandler, FlutterPlugin, Activity
             case "init":
                 Log.i("FLUTTER", "call init:" + call.arguments.toString());
                 result.success(null);
+                break;
+            case "initTexture":
+                if (!mTextureInitialized) {
+                    final FPlayer player = new FPlayer(this, true);
+                    player.setupSurface();
+                    player.release();
+                    mTextureInitialized = true;
+                    Log.i("FLUTTER", "initTexture: texture initialized successfully");
+                }
+                result.success(mTextureInitialized);
                 break;
             case "createPlayer": {
                 FPlayer fPlayer = new FPlayer(this, false);
