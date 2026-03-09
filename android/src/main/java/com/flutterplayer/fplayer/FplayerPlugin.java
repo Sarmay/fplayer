@@ -115,9 +115,12 @@ public class FplayerPlugin implements MethodCallHandler, FlutterPlugin, Activity
         initWithBinding(binding);
         channel.setMethodCallHandler(this);
 
-        final FPlayer player = new FPlayer(this, true);
-        player.setupSurface();
-        player.release();
+        // Removed: pre-loading player causes crash on Android 16+
+        // The texture registration fails when called too early in the plugin lifecycle.
+        // IjkMediaPlayer will be loaded lazily when the first real player is created.
+        // final FPlayer player = new FPlayer(this, true);
+        // player.setupSurface();
+        // player.release();
 
         AudioManager audioManager = audioManager();
         if (audioManager != null) {
