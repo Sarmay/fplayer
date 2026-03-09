@@ -568,7 +568,7 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
     final PlatformException e = obj as PlatformException;
     FException exception = FException.fromPlatformException(e);
     FLog.e("$this errorListener: $exception");
-    _setValue(value.copyWith(exception: exception));
+    _setValue(value.copyWith(exception: exception, state: FState.error));
   }
 
   @override
