@@ -25,6 +25,11 @@ class VideoScreenState extends State<VideoScreen> {
       url: 'http://player.alicdn.com/video/aliyunmedia.mp4',
     ),
     VideoItem(
+      title: '404',
+      subTitle: '视频2副标题',
+      url: 'https://fplayer.dev/butterfly.flv',
+    ),
+    VideoItem(
       title: '第二集',
       subTitle: '视频2副标题',
       url: 'https://www.runoob.com/try/demo_source/mov_bbb.mp4',

@@ -782,9 +782,7 @@ class __FPanel2State extends State<_FPanel2> {
               child: Text(
                 mapKey,
                 style: TextStyle(
-                  color: caption == captionVals
-                      ? _color
-                      : Colors.white,
+                  color: caption == captionVals ? _color : Colors.white,
                   fontSize: 16,
                 ),
               ),
@@ -830,9 +828,7 @@ class __FPanel2State extends State<_FPanel2> {
               child: Text(
                 "${mapKey}X",
                 style: TextStyle(
-                  color: speed == speedVals
-                      ? _color
-                      : Colors.white,
+                  color: speed == speedVals ? _color : Colors.white,
                   fontSize: 16,
                 ),
               ),
@@ -1650,101 +1646,141 @@ class __FPanel2State extends State<_FPanel2> {
   }
 
   Widget buildStateless() {
-    if (player.state == FState.asyncPreparing) {
+    bool fullScreen = player.value.fullScreen;
+
+    Widget buildTopBar() {
+      if (!fullScreen) return Container();
       return Container(
-        alignment: Alignment.center,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            SizedBox(
-              width: 30,
-              height: 30,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation(
-                  _color,
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              "加载中...",
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+        height: 80,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0x88000000), Color(0x00000000)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 20),
+          child: Row(
+            children: [
+              buildBack(context),
+              buildTitle(),
+            ],
+          ),
         ),
       );
-    } else if (_isPlayError) {
-      return Container(
-        alignment: Alignment.center,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Padding(
-              padding: EdgeInsets.only(bottom: 15),
-              child: Icon(
-                Icons.error_rounded,
-                color: Colors.white70,
-                size: 70,
-              ),
-            ),
-            RichText(
-              text: TextSpan(
-                text: "播放异常！",
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                children: <InlineSpan>[
-                  TextSpan(
-                    text: "刷新",
-                    style: TextStyle(
-                      color: _color,
+    }
+
+    if (player.state == FState.asyncPreparing) {
+      return Stack(
+        children: [
+          buildTopBar(),
+          Container(
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                SizedBox(
+                  width: 30,
+                  height: 30,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    valueColor: AlwaysStoppedAnimation(
+                      _color,
                     ),
-                    recognizer: TapGestureRecognizer()
-                      ..onTap = () {
-                        widget.onError?.call();
-                      },
-                  )
-                ],
-              ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  "加载中...",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
+      );
+    } else if (_isPlayError) {
+      return Stack(
+        children: [
+          buildTopBar(),
+          Container(
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 15),
+                  child: Icon(
+                    Icons.error_rounded,
+                    color: Colors.white70,
+                    size: 70,
+                  ),
+                ),
+                RichText(
+                  text: TextSpan(
+                    text: "播放异常！",
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    children: <InlineSpan>[
+                      TextSpan(
+                        text: "刷新",
+                        style: TextStyle(
+                          color: _color,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            widget.onError?.call();
+                          },
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
     } else if (!player.value.audioRenderStart &&
         !player.value.videoRenderStart) {
-      return Container(
-        alignment: Alignment.center,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            SizedBox(
-              width: 30,
-              height: 30,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation(
-                  _color,
+      return Stack(
+        children: [
+          buildTopBar(),
+          Container(
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                SizedBox(
+                  width: 30,
+                  height: 30,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    valueColor: AlwaysStoppedAnimation(
+                      _color,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 10),
+                const Text(
+                  "加载中...",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            const Text(
-              "加载中...",
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       );
     } else {
       return Container();
@@ -1769,7 +1805,8 @@ class __FPanel2State extends State<_FPanel2> {
       var brightness = _brightness;
       if (volume != null || brightness != null) {
         Widget toast = volume == null
-            ? defaultFBrightnessToast(brightness!, _valController.stream, _color)
+            ? defaultFBrightnessToast(
+                brightness!, _valController.stream, _color)
             : defaultFVolumeToast(volume, _valController.stream, _color);
         ws.add(
           IgnorePointer(
