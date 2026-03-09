@@ -1,7 +1,7 @@
 part of fplayer;
 
 typedef FPanelWidgetBuilder = Widget Function(FPlayer player, FData data,
-    BuildContext context, Size viewSize, Rect texturePos);
+    BuildContext context, Size viewSize, Rect texturePos, Color color);
 
 /// How a video should be inscribed into [FView].
 ///
@@ -326,7 +326,7 @@ class _InnerFView extends StatefulWidget {
 class __InnerFViewState extends State<_InnerFView> {
   late FPlayer _player;
   FPanelWidgetBuilder? _panelBuilder;
-  Color? _color;
+  Color _color = Colors.blue;
   FFit _fit = FFit.contain;
   int _textureId = -1;
   double _vWidth = -1;
@@ -507,7 +507,7 @@ class __InnerFViewState extends State<_InnerFView> {
         Container(
           width: constraints.maxWidth,
           height: constraints.maxHeight,
-          color: _color,
+          color: const Color(0xFF000000),
         ),
         Positioned.fromRect(
             rect: pos,
@@ -528,7 +528,7 @@ class __InnerFViewState extends State<_InnerFView> {
       }
 
       if (_panelBuilder != null) {
-        ws.add(_panelBuilder!(_player, data, ctx, constraints.biggest, pos));
+        ws.add(_panelBuilder!(_player, data, ctx, constraints.biggest, pos, _color));
       }
       return Stack(
         children: ws as List<Widget>,

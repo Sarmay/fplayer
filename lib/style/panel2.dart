@@ -65,7 +65,7 @@ FPanelWidgetBuilder fPanelBuilder({
   final void Function(FState, bool)? onVideoStateChange,
 }) {
   return (FPlayer player, FData data, BuildContext context, Size viewSize,
-      Rect texturePos) {
+      Rect texturePos, Color color) {
     return _FPanel2(
       key: key,
       player: player,
@@ -81,6 +81,7 @@ FPanelWidgetBuilder fPanelBuilder({
       viewSize: viewSize,
       texPos: texturePos,
       fill: fill,
+      color: color,
       doubleTap: doubleTap,
       isSnapShot: isSnapShot,
       hideDuration: duration,
@@ -133,6 +134,7 @@ class _FPanel2 extends StatefulWidget {
   final Size viewSize;
   final Rect texPos;
   final bool fill;
+  final Color color;
   final bool doubleTap;
   final bool isSnapShot;
   final int hideDuration;
@@ -153,6 +155,7 @@ class _FPanel2 extends StatefulWidget {
     required this.player,
     required this.data,
     this.fill = false,
+    required this.color,
     required this.viewSize,
     this.hideDuration = 5000,
     this.doubleTap = false,
@@ -186,6 +189,7 @@ class _FPanel2 extends StatefulWidget {
 
 class __FPanel2State extends State<_FPanel2> {
   FPlayer get player => widget.player;
+  Color get _color => widget.color;
 
   Timer? _hideTimer;
   bool _hideStuff = true;
@@ -406,8 +410,8 @@ class __FPanel2State extends State<_FPanel2> {
 
   FSliderColors sliderColors(context) {
     FSliderColors sliderColorsItem = FSliderColors(
-      cursorColor: Theme.of(context).primaryColor,
-      playedColor: Theme.of(context).primaryColor,
+      cursorColor: _color,
+      playedColor: _color,
       baselineColor: const Color(0xFFD8D8D8),
       bufferedColor: const Color(0xFF787878),
     );
@@ -667,8 +671,8 @@ class __FPanel2State extends State<_FPanel2> {
   // 播放与暂停图标
   Widget buildPlayButton(BuildContext context, double height) {
     Widget icon = (player.state == FState.started)
-        ? Icon(Icons.pause_rounded, color: Theme.of(context).primaryColor)
-        : Icon(Icons.play_arrow_rounded, color: Theme.of(context).primaryColor);
+        ? Icon(Icons.pause_rounded, color: _color)
+        : Icon(Icons.play_arrow_rounded, color: _color);
     bool fullScreen = player.value.fullScreen;
     return IconButton(
       padding: EdgeInsets.zero,
@@ -686,7 +690,7 @@ class __FPanel2State extends State<_FPanel2> {
       iconSize: fullScreen ? height : height * 0.8,
       icon: Icon(
         Icons.skip_next_rounded,
-        color: Theme.of(context).primaryColor,
+        color: _color,
       ),
       onPressed: playNextVideo,
     );
@@ -711,7 +715,7 @@ class __FPanel2State extends State<_FPanel2> {
             child: Text(
               '字幕',
               style: TextStyle(
-                color: Theme.of(context).primaryColorDark,
+                color: _color,
               ),
             ),
           ),
@@ -730,7 +734,7 @@ class __FPanel2State extends State<_FPanel2> {
           child: Text(
             '倍速',
             style: TextStyle(
-              color: Theme.of(context).primaryColorDark,
+              color: _color,
             ),
           ),
         ),
@@ -748,7 +752,7 @@ class __FPanel2State extends State<_FPanel2> {
             child: Text(
               '${resolution}P',
               style: TextStyle(
-                color: Theme.of(context).primaryColorDark,
+                color: _color,
               ),
             ),
           ),
@@ -779,7 +783,7 @@ class __FPanel2State extends State<_FPanel2> {
                 mapKey,
                 style: TextStyle(
                   color: caption == captionVals
-                      ? Theme.of(context).primaryColor
+                      ? _color
                       : Colors.white,
                   fontSize: 16,
                 ),
@@ -827,7 +831,7 @@ class __FPanel2State extends State<_FPanel2> {
                 "${mapKey}X",
                 style: TextStyle(
                   color: speed == speedVals
-                      ? Theme.of(context).primaryColor
+                      ? _color
                       : Colors.white,
                   fontSize: 16,
                 ),
@@ -885,7 +889,7 @@ class __FPanel2State extends State<_FPanel2> {
                 mapKey,
                 style: TextStyle(
                   color: resolution == resolutionItem.value
-                      ? Theme.of(context).primaryColor
+                      ? _color
                       : Colors.white,
                   fontSize: 16,
                 ),
@@ -914,17 +918,17 @@ class __FPanel2State extends State<_FPanel2> {
     Icon icon = player.value.fullScreen
         ? Icon(
             Icons.fullscreen_exit_rounded,
-            color: Theme.of(context).primaryColor,
+            color: _color,
           )
         : Icon(
             Icons.fullscreen_rounded,
-            color: Theme.of(context).primaryColor,
+            color: _color,
           );
     bool fullScreen = player.value.fullScreen;
     return IconButton(
       padding: EdgeInsets.zero,
       iconSize: fullScreen ? height : height * 0.8,
-      color: Theme.of(context).primaryColorDark,
+      color: _color,
       icon: icon,
       onPressed: () {
         player.value.fullScreen
@@ -942,7 +946,7 @@ class __FPanel2State extends State<_FPanel2> {
       text,
       style: TextStyle(
         fontSize: 12,
-        color: Theme.of(context).primaryColorDark,
+        color: _color,
       ),
     );
   }
@@ -1031,7 +1035,7 @@ class __FPanel2State extends State<_FPanel2> {
                     _duration2String(_currentPos),
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).primaryColorDark,
+                      color: _color,
                     ),
                   ),
                   Expanded(
@@ -1044,7 +1048,7 @@ class __FPanel2State extends State<_FPanel2> {
                     _duration2String(_duration),
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).primaryColorDark,
+                      color: _color,
                     ),
                   ),
                 ],
@@ -1168,15 +1172,15 @@ class __FPanel2State extends State<_FPanel2> {
                 },
                 child: Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColorLight,
-                    borderRadius: const BorderRadius.all(
+                  decoration: const BoxDecoration(
+                    color: Color.fromRGBO(0, 0, 0, 0.2),
+                    borderRadius: BorderRadius.all(
                       Radius.circular(5),
                     ),
                   ),
                   child: Icon(
                     Icons.camera_alt,
-                    color: Theme.of(context).primaryColor,
+                    color: _color,
                   ),
                 ),
               ),
@@ -1196,19 +1200,19 @@ class __FPanel2State extends State<_FPanel2> {
               },
               child: Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColorLight,
-                  borderRadius: const BorderRadius.all(Radius.circular(5)),
+                decoration: const BoxDecoration(
+                  color: Color.fromRGBO(0, 0, 0, 0.2),
+                  borderRadius: BorderRadius.all(Radius.circular(5)),
                 ),
                 child: Visibility(
                   visible: lock,
                   replacement: Icon(
                     Icons.lock_open,
-                    color: Theme.of(context).primaryColor,
+                    color: _color,
                   ),
                   child: Icon(
                     Icons.lock,
-                    color: Theme.of(context).primaryColor,
+                    color: _color,
                   ),
                 ),
               ),
@@ -1378,7 +1382,7 @@ class __FPanel2State extends State<_FPanel2> {
               Duration(milliseconds: _seekPos.toInt()),
             )} / ${_duration2String(_duration)}",
             style: TextStyle(
-              color: Theme.of(context).primaryColorDark,
+              color: _color,
               fontSize: 20,
             ),
           ),
@@ -1400,7 +1404,7 @@ class __FPanel2State extends State<_FPanel2> {
             child: CircularProgressIndicator(
               strokeWidth: 3,
               valueColor: AlwaysStoppedAnimation(
-                Theme.of(context).primaryColor,
+                _color,
               ),
             ),
           ),
@@ -1488,7 +1492,7 @@ class __FPanel2State extends State<_FPanel2> {
       padding: EdgeInsets.zero,
       icon: Icon(
         Icons.arrow_back_ios_rounded,
-        color: Theme.of(context).primaryColor,
+        color: _color,
       ),
       onPressed: () {
         player.value.fullScreen
@@ -1532,7 +1536,7 @@ class __FPanel2State extends State<_FPanel2> {
       child: Text(
         '${DateTime.now().hour}:${DateTime.now().minute}',
         style: TextStyle(
-          color: Theme.of(context).primaryColor,
+          color: _color,
           fontSize: 12,
         ),
       ),
@@ -1547,13 +1551,13 @@ class __FPanel2State extends State<_FPanel2> {
           Text(
             '$batteryLevel%',
             style: TextStyle(
-              color: Theme.of(context).primaryColor,
+              color: _color,
               fontSize: 10,
             ),
           ),
           Icon(
             Icons.battery_charging_full_rounded,
-            color: Theme.of(context).primaryColor,
+            color: _color,
           ),
         ],
       );
@@ -1563,44 +1567,44 @@ class __FPanel2State extends State<_FPanel2> {
           Text(
             '$batteryLevel%',
             style: TextStyle(
-              color: Theme.of(context).primaryColor,
+              color: _color,
               fontSize: 10,
             ),
           ),
           if (batteryLevel < 14)
             Icon(
               Icons.battery_1_bar_rounded,
-              color: Theme.of(context).primaryColor,
+              color: _color,
             )
           else if (batteryLevel < 28)
             Icon(
               Icons.battery_2_bar_rounded,
-              color: Theme.of(context).primaryColor,
+              color: _color,
             )
           else if (batteryLevel < 42)
             Icon(
               Icons.battery_3_bar_rounded,
-              color: Theme.of(context).primaryColor,
+              color: _color,
             )
           else if (batteryLevel < 56)
             Icon(
               Icons.battery_4_bar_rounded,
-              color: Theme.of(context).primaryColor,
+              color: _color,
             )
           else if (batteryLevel < 70)
             Icon(
               Icons.battery_5_bar_rounded,
-              color: Theme.of(context).primaryColor,
+              color: _color,
             )
           else if (batteryLevel < 84)
             Icon(
               Icons.battery_6_bar_rounded,
-              color: Theme.of(context).primaryColor,
+              color: _color,
             )
           else
             Icon(
               Icons.battery_full_rounded,
-              color: Theme.of(context).primaryColor,
+              color: _color,
             )
         ],
       );
@@ -1639,7 +1643,7 @@ class __FPanel2State extends State<_FPanel2> {
       padding: EdgeInsets.zero,
       icon: Icon(
         widget.settingIcon,
-        color: Theme.of(context).primaryColor,
+        color: _color,
       ),
       onPressed: widget.settingFun,
     );
@@ -1658,7 +1662,7 @@ class __FPanel2State extends State<_FPanel2> {
               child: CircularProgressIndicator(
                 strokeWidth: 3,
                 valueColor: AlwaysStoppedAnimation(
-                  Theme.of(context).primaryColor,
+                  _color,
                 ),
               ),
             ),
@@ -1700,7 +1704,7 @@ class __FPanel2State extends State<_FPanel2> {
                   TextSpan(
                     text: "刷新",
                     style: TextStyle(
-                      color: Theme.of(context).primaryColor,
+                      color: _color,
                     ),
                     recognizer: TapGestureRecognizer()
                       ..onTap = () {
@@ -1726,7 +1730,7 @@ class __FPanel2State extends State<_FPanel2> {
               child: CircularProgressIndicator(
                 strokeWidth: 3,
                 valueColor: AlwaysStoppedAnimation(
-                  Theme.of(context).primaryColor,
+                  _color,
                 ),
               ),
             ),
@@ -1765,8 +1769,8 @@ class __FPanel2State extends State<_FPanel2> {
       var brightness = _brightness;
       if (volume != null || brightness != null) {
         Widget toast = volume == null
-            ? defaultFBrightnessToast(brightness!, _valController.stream)
-            : defaultFVolumeToast(volume, _valController.stream);
+            ? defaultFBrightnessToast(brightness!, _valController.stream, _color)
+            : defaultFVolumeToast(volume, _valController.stream, _color);
         ws.add(
           IgnorePointer(
             child: AnimatedOpacity(

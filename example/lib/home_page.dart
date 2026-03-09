@@ -59,29 +59,9 @@ class HomeScreen extends StatelessWidget {
               },
               text: "Online Samples",
             ),
-            /*
-            Container(
-              color: Theme.of(context).primaryColorLight,
-              padding: EdgeInsets.only(left: 15, top: 3, bottom: 3, right: 15),
-              child: Text(
-                "Recent",
-                style: TextStyle(fontSize: 15),
-              ),
-            ),
-            Expanded(
-              child: list,
-            ),
-             */
           ],
         ),
       ),
     );
   }
-}
-
-void displaySnackBar(BuildContext context) {
-  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-    duration: Duration(seconds: 1),
-    content: Text('Not implemented, pull request is welcome 👏👏🍺🍺'),
-  ));
 }

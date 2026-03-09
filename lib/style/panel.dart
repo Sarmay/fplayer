@@ -2,12 +2,13 @@ part of fplayer;
 
 /// Default builder generate default [FPanel] UI
 Widget defaultFPanelBuilder(FPlayer player, FData data, BuildContext context,
-    Size viewSize, Rect texturePos) {
+    Size viewSize, Rect texturePos, Color color) {
   return _DefaultFPanel(
       player: player,
       buildContext: context,
       viewSize: viewSize,
-      texturePos: texturePos);
+      texturePos: texturePos,
+      color: color);
 }
 
 /// Default Panel Widget
@@ -16,12 +17,14 @@ class _DefaultFPanel extends StatefulWidget {
   final BuildContext buildContext;
   final Size viewSize;
   final Rect texturePos;
+  final Color color;
 
   const _DefaultFPanel({
     required this.player,
     required this.buildContext,
     required this.viewSize,
     required this.texturePos,
+    required this.color,
   });
 
   @override
@@ -186,7 +189,7 @@ class _DefaultFPanelState extends State<_DefaultFPanel> {
       duration: const Duration(milliseconds: 400),
       child: Container(
         height: barHeight,
-        color: Theme.of(context).dialogBackgroundColor,
+        color: widget.color,
         child: Row(
           children: <Widget>[
             _buildVolumeButton(),

@@ -207,7 +207,7 @@ class _FVolumeWatcherState extends State<FVolumeWatcher> {
   void showVolToast(double vol) {
     bool active = _timer?.isActive ?? false;
     _timer?.cancel();
-    Widget widget = defaultFVolumeToast(vol, _volController.stream);
+    Widget widget = defaultFVolumeToast(vol, _volController.stream, Colors.red);
     if (active == false) {
       var entry = OverlayEntry(builder: (_) => widget);
       _entry = entry;

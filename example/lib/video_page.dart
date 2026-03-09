@@ -134,7 +134,7 @@ class VideoScreenState extends State<VideoScreen> {
               player: player,
               width: double.infinity,
               height: videoHeight,
-              color: Colors.black,
+              color: Colors.blue,
               fsFit: FFit.contain, // 全屏模式下的填充
               fit: FFit.contain, // 正常模式下的填充
               panelBuilder: fPanelBuilder(

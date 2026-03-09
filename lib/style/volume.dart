@@ -23,23 +23,24 @@
 part of fplayer;
 
 /// Default builder generate default FVolToast UI
-Widget defaultFVolumeToast(double value, Stream<double> emitter) {
-  return _FSliderToast(value, 0, emitter);
+Widget defaultFVolumeToast(double value, Stream<double> emitter, Color color) {
+  return _FSliderToast(value, 0, emitter, color);
 }
 
-Widget defaultFBrightnessToast(double value, Stream<double> emitter) {
-  return _FSliderToast(value, 1, emitter);
+Widget defaultFBrightnessToast(double value, Stream<double> emitter, Color color) {
+  return _FSliderToast(value, 1, emitter, color);
 }
 
 class _FSliderToast extends StatefulWidget {
   final Stream<double> emitter;
   final double initial;
+  final Color color;
 
   // type 0 volume
   // type 1 screen brightness
   final int type;
 
-  const _FSliderToast(this.initial, this.type, this.emitter);
+  const _FSliderToast(this.initial, this.type, this.emitter, this.color);
 
   @override
   _FSliderToastState createState() => _FSliderToastState();
@@ -78,7 +79,7 @@ class _FSliderToastState extends State<_FSliderToast> {
       iconData = type == 0 ? Icons.volume_up : Icons.brightness_high;
     }
 
-    final primaryColor = Theme.of(context).primaryColor;
+    final primaryColor = widget.color;
     return Align(
       alignment: const Alignment(0, -0.4),
       child: Card(
