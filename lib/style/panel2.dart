@@ -586,7 +586,11 @@ class __FPanel2State extends State<_FPanel2> {
     // tipTime == 0: 需要购买，立即显示提示
     // tipTime == -1: 免费视频，无限制
     if (widget.tipTime == -1) return; // 免费视频，无限制
-    if (_tipTriggered) return;
+    if (_tipTriggered) {
+      // 暂停视频
+      _pauseVideo();
+      return;
+    }
 
     if (widget.tipTime == 0) {
       // 需要购买，立即显示提示
