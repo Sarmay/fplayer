@@ -220,7 +220,7 @@ class _DefaultFPanelState extends State<_DefaultFPanel> {
                         onChangeEnd: (v) {
                           setState(() {
                             player.seekTo(v.toInt());
-                            print("seek to $v");
+                            FLog.d("seek to $v");
                             _currentPos =
                                 Duration(milliseconds: _seekPos.toInt());
                             _seekPos = -1;

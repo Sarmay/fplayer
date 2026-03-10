@@ -537,7 +537,7 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
         bool value = map['value'] ?? false;
         _buffering = value;
         _bufferStateController.add(value);
-        FLog.d("$this freeze ${value ? "start" : "end"}");
+        FLog.v("$this freeze ${value ? "start" : "end"}");
         break;
       case 'buffering':
         int head = map['head'] ?? 0;

@@ -10,7 +10,7 @@ class FPlugin {
   /// Call this method before creating any FPlayer, typically in main() or
   /// after WidgetsFlutterBinding.ensureInitialized().
   /// On Android 16+, this must be called after the Flutter engine is fully ready.
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// void main() async {
@@ -170,7 +170,7 @@ class FPlugin {
 
   static void _eventListener(dynamic event) {
     final Map<dynamic, dynamic> map = event;
-    FLog.d("plugin listener: $map");
+    FLog.v("plugin listener: $map");
     switch (map['event']) {
       case 'volume':
         bool sui = map['sui'] ?? false;
