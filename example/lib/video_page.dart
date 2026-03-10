@@ -235,6 +235,10 @@ class VideoScreenState extends State<VideoScreen> {
                     setVideoUrl(videoList[index].url);
                   }
                 },
+                // 视频时间更新回调触发间隔（单位：次，每多少次位置更新触发一次回调）
+                // 默认值为50，即每50次位置更新触发一次回调
+                // 值越小回调越频繁，但会增加性能消耗
+                onVideoTimeChangeInterval: 50,
                 onVideoTimeChange: (Duration d) {
                   // 视频时间变动则触发一次，可以保存视频播放历史
                   print("当前进度：${d.inSeconds}");

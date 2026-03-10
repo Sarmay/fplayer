@@ -61,6 +61,11 @@ FPanelWidgetBuilder fPanelBuilder({
   /// 视频时间更新
   final void Function(Duration)? onVideoTimeChange,
 
+  /// 视频时间更新回调触发间隔（单位：次，每多少次位置更新触发一次回调）
+  /// 默认值为50，即每50次位置更新触发一次回调
+  /// 值越小回调越频繁，但会增加性能消耗
+  final int onVideoTimeChangeInterval = 50,
+
   /// 视频状态变更
   final void Function(FState, bool)? onVideoStateChange,
 
@@ -104,6 +109,7 @@ FPanelWidgetBuilder fPanelBuilder({
       onVideoEnd: onVideoEnd,
       onVideoPrepared: onVideoPrepared,
       onVideoTimeChange: onVideoTimeChange,
+      onVideoTimeChangeInterval: onVideoTimeChangeInterval,
       onVideoStateChange: onVideoStateChange,
       tipTime: tipTime,
       tipWidget: tipWidget,
@@ -160,6 +166,7 @@ class _FPanel2 extends StatefulWidget {
   final void Function()? onVideoEnd;
   final void Function()? onVideoPrepared;
   final void Function(Duration)? onVideoTimeChange;
+  final int onVideoTimeChangeInterval;
   final void Function(FState, bool)? onVideoStateChange;
   final int tipTime;
   final Widget? tipWidget;
@@ -194,6 +201,7 @@ class _FPanel2 extends StatefulWidget {
     this.onVideoEnd,
     this.onVideoPrepared,
     this.onVideoTimeChange,
+    this.onVideoTimeChangeInterval = 50,
     this.onVideoStateChange,
     this.tipTime = -1,
     this.tipWidget,
@@ -374,8 +382,7 @@ class __FPanel2State extends State<_FPanel2> {
         widget.data.clearValue(FData._fViewPanelSeekto);
       }
       _needClearSeekData = false;
-      // 每n次才进入一次不然太频繁发送处理业务太复杂则会增加消耗
-      if (sendCount % 50 == 0) {
+      if (sendCount % widget.onVideoTimeChangeInterval == 0) {
         widget.onVideoTimeChange?.call(v);
       }
       sendCount++;
@@ -1975,62 +1982,75 @@ class __FPanel2State extends State<_FPanel2> {
 
   /// 构建试看提示Widget
   Widget _buildTipWidget() {
+    Widget tipContent = widget.tipWidget ??
+        Container(
+          color: Colors.black87,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.lock_outline,
+                      color: Colors.white,
+                      size: 64,
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      '试看已结束',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '购买后可观看完整视频',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+
+    if (player.value.fullScreen) {
+      return Stack(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: double.infinity,
+            child: tipContent,
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            child: IconButton(
+              icon: const Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                player.exitFullScreen();
+              },
+            ),
+          ),
+        ],
+      );
+    }
+
     return Container(
       color: Colors.black54,
       width: double.infinity,
       height: double.infinity,
-      child: widget.tipWidget ??
-          Container(
-            color: Colors.black87,
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // 只在全屏模式下显示返回按钮
-                if (player.value.fullScreen)
-                  Align(
-                    alignment: Alignment.topLeft,
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                      ),
-                      onPressed: () {
-                        player.exitFullScreen();
-                      },
-                    ),
-                  ),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.lock_outline,
-                        color: Colors.white,
-                        size: 64,
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        '试看已结束',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '购买后可观看完整视频',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+      child: tipContent,
     );
   }
 }

@@ -1,355 +1,296 @@
-# fplayer (Video player plugin for Flutter) Flutter 媒体播放器
+# fplayer
 
+[![pub package](https://img.shields.io/pub/v/sarmay_fplayer.svg)](https://pub.dartlang.org/packages/sarmay_fplayer)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Flutter media player plugin for iOS and android based on [fplayer-core](https://github.com/FlutterPlayer/ijkplayer)
+A Flutter video player plugin for iOS and Android based on [fplayer-core](https://github.com/FlutterPlayer/ijkplayer).
 
-您的支持是我们开发的动力。 欢迎Star，欢迎PR~。
-[Feedback welcome](https://github.com/FlutterPlayer/fplayer/issues) and
-[Pull Requests](https://github.com/FlutterPlayer/fplayer/pulls) are most welcome!
+## Features 功能
 
-## Documentation 文档
-
-* 开发文档  https://fplayer.dev/ 包含首页、入门指南、基础、内核、fplayer 中的概念理解
+- **多协议支持**: 支持 HTTP、HTTPS、RTSP、RTMP、M3U8 等常见流媒体协议
+- **多种编码格式**: 支持 H.264、H.265、VP8、VP9 等视频编码
+- **丰富 UI 面板**: 提供开箱即用的视频播放器控制面板
+- **视频列表**: 支持多集视频列表播放
+- **倍速播放**: 支持 0.5x、1.0x、1.5x、2.0x 等多种倍速
+- **清晰度切换**: 支持多清晰度切换
+- **截屏功能**: 支持视频截屏
+- **试看功能**: 支持试看时间限制
+- **全屏模式**: 支持竖屏和横屏全屏
+- **播放记录**: 支持记录和恢复播放进度
+- **手势控制**: 支持双击、滑动等手势操作
 
 ## Installation 安装
 
-Add `fplayer` as a [dependency in your pubspec.yaml file](https://flutter.io/using-packages/). 
-
-[![pub package](https://img.shields.io/pub/v/fplayer.svg)](https://pub.dartlang.org/packages/fplayer)
+Add `sarmay_fplayer` as a dependency in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  fplayer: ^{{latest version}}
+  sarmay_fplayer: ^1.1.13
 ```
 
-Replace `{{latest version}}` with the version number in badge above.
+Or use git:
 
-Use git branch which not published to pub.
 ```yaml
 dependencies:
-  fplayer:
+  sarmay_fplayer:
     git:
-      url: https://github.com/FlutterPlayer/fplayer.git
-      ref: develop # can be replaced to branch or tag name
+      url: https://github.com/Sarmay/fplayer.git
+      ref: main
 ```
 
-## Example 示例
+## Quick Start 快速开始
 
 ```dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:fplayer/fplayer.dart';
-import 'package:screen_brightness/screen_brightness.dart';
-
-import 'app_bar.dart';
+import 'package:sarmay_fplayer/sarmay_fplayer.dart';
 
 class VideoScreen extends StatefulWidget {
-  final String url;
-
-  const VideoScreen({super.key, required this.url});
+  const VideoScreen({super.key});
 
   @override
-  VideoScreenState createState() => VideoScreenState();
+  State<VideoScreen> createState() => _VideoScreenState();
 }
 
-class VideoScreenState extends State<VideoScreen> {
+class _VideoScreenState extends State<VideoScreen> {
   final FPlayer player = FPlayer();
-
-  // 视频列表
-  List<VideoItem> videoList = [
-    VideoItem(
-      title: '第一集',
-      subTitle: '视频1副标题',
-      url: 'http://player.alicdn.com/video/aliyunmedia.mp4',
-    ),
-    VideoItem(
-      title: '第二集',
-      subTitle: '视频2副标题',
-      url: 'https://www.runoob.com/try/demo_source/mov_bbb.mp4',
-    ),
-    VideoItem(
-      title: '第三集',
-      subTitle: '视频3副标题',
-      url: 'http://player.alicdn.com/video/aliyunmedia.mp4',
-    ),
-  ];
-
-  // 倍速列表
-  Map<String, double> speedList = {
-    "2.0": 2.0,
-    "1.5": 1.5,
-    "1.0": 1.0,
-    "0.5": 0.5,
-  };
-
-  // 清晰度列表
-  Map<String, ResolutionItem> resolutionList = {
-    "480P": ResolutionItem(
-      value: 480,
-      url: 'https://www.runoob.com/try/demo_source/mov_bbb.mp4',
-    ),
-    "270P": ResolutionItem(
-      value: 270,
-      url: 'http://player.alicdn.com/video/aliyunmedia.mp4',
-    ),
-  };
-
-  // 视频索引,单个视频可不传
-  int videoIndex = 0;
-
-  // 模拟播放记录视频初始化完需要跳转的进度
-  int seekTime = 100000;
-
-  VideoScreenState();
 
   @override
   void initState() {
     super.initState();
-    startPlay();
-  }
-
-  void startPlay() async {
-    // 视频播放相关配置
-    await player.setOption(FOption.hostCategory, "enable-snapshot", 1);
-    await player.setOption(FOption.hostCategory, "request-screen-on", 1);
-    await player.setOption(FOption.hostCategory, "request-audio-focus", 1);
-    await player.setOption(FOption.playerCategory, "reconnect", 20);
-    await player.setOption(FOption.playerCategory, "framedrop", 20);
-    await player.setOption(FOption.playerCategory, "enable-accurate-seek", 1);
-    await player.setOption(FOption.playerCategory, "mediacodec", 1);
-    await player.setOption(FOption.playerCategory, "packet-buffering", 0);
-    await player.setOption(FOption.playerCategory, "soundtouch", 1);
-
-    // 播放传入的视频
-    setVideoUrl(widget.url);
-
-    // 播放视频列表的第一个视频
-    // setVideoUrl(videoList[videoIndex].url);
-  }
-
-  Future<void> setVideoUrl(String url) async {
-    try {
-      await player.setDataSource(url, autoPlay: true, showCover: true);
-    } catch (error) {
-      print("播放-异常: $error");
-      return;
-    }
+    player.setDataSource(
+      'https://www.runoob.com/try/demo_source/mov_bbb.mp4',
+      autoPlay: true,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    MediaQueryData mediaQueryData = MediaQuery.of(context);
-    Size size = mediaQueryData.size;
-    double videoHeight = size.width * 9 / 16;
     return Scaffold(
-      appBar: const FAppBar.defaultSetting(title: "Video"),
-      body: Column(
-        children: [
-          FView(
-            player: player,
-            width: double.infinity,
-            height: videoHeight,
-            color: Colors.black,
-            fsFit: FFit.contain, // 全屏模式下的填充
-            fit: FFit.fill, // 正常模式下的填充
-            panelBuilder: fPanelBuilder(
-              // 单视频配置
-              title: '视频标题',
-              subTitle: '视频副标题',
-              // 右下方截屏按钮
-              isSnapShot: true,
-              // 右上方按钮组开关
-              isRightButton: true,
-              // 右上方按钮组
-              rightButtonList: [
-                InkWell(
-                  onTap: () {},
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColorLight,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(5),
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.favorite,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                ),
-                InkWell(
-                  onTap: () {},
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColorLight,
-                      borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(5),
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.thumb_up,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                )
-              ],
-              // 字幕功能：待内核提供api
-              // caption: true,
-              // 视频列表开关
-              isVideos: true,
-              // 视频列表列表
-              videoList: videoList,
-              // 当前视频索引
-              videoIndex: videoIndex,
-              // 全屏模式下点击播放下一集视频按钮
-              playNextVideoFun: () {
-                setState(() {
-                  videoIndex += 1;
-                });
-              },
-              settingFun: () {
-                print('设置按钮点击事件');
-              },
-              // 自定义倍速列表
-              speedList: speedList,
-              // 清晰度开关
-              isResolution: true,
-              // 自定义清晰度列表
-              resolutionList: resolutionList,
-              // 视频播放错误点击刷新回调
-              onError: () async {
-                await player.reset();
-                setVideoUrl(videoList[videoIndex].url);
-              },
-              // 视频播放完成回调
-              onVideoEnd: () async {
-                var index = videoIndex + 1;
-                if (index < videoList.length) {
-                  await player.reset();
-                  setState(() {
-                    videoIndex = index;
-                  });
-                  setVideoUrl(videoList[index].url);
-                }
-              },
-              onVideoTimeChange: () {
-                // 视频时间变动则触发一次，可以保存视频播放历史
-              },
-              onVideoPrepared: () async {
-                // 视频初始化完毕，如有历史记录时间段则可以触发快进
-                try {
-                  if (seekTime >= 1) {
-                    /// seekTo必须在FState.prepared
-                    print('seekTo');
-                    await player.seekTo(seekTime);
-                    // print("视频快进-$seekTime");
-                    seekTime = 0;
-                  }
-                } catch (error) {
-                  print("视频初始化完快进-异常: $error");
-                }
-              },
-            ),
-          ),
-          // 自定义小屏列表
-          Container(
-            width: double.infinity,
-            height: 30,
-            margin: const EdgeInsets.all(20),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.zero,
-              itemCount: videoList.length,
-              itemBuilder: (context, index) {
-                bool isCurrent = videoIndex == index;
-                Color textColor = Theme.of(context).primaryColor;
-                Color bgColor = Theme.of(context).primaryColorDark;
-                Color borderColor = Theme.of(context).primaryColor;
-                if (isCurrent) {
-                  textColor = Theme.of(context).primaryColorDark;
-                  bgColor = Theme.of(context).primaryColor;
-                  borderColor = Theme.of(context).primaryColor;
-                }
-                return GestureDetector(
-                  onTap: () async {
-                    await player.reset();
-                    setState(() {
-                      videoIndex = index;
-                    });
-                    setVideoUrl(videoList[index].url);
-                  },
-                  child: Container(
-                    margin: EdgeInsets.only(left: index == 0 ? 0 : 10),
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      color: bgColor,
-                      border: Border.all(
-                        width: 1.5,
-                        color: borderColor,
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      videoList[index].title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: textColor,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+      appBar: AppBar(title: const Text('Video Player')),
+      body: FView(
+        player: player,
+        width: double.infinity,
+        height: 300,
+        color: Colors.black,
+        panelBuilder: fPanelBuilder(
+          title: '视频标题',
+          subTitle: '视频副标题',
+        ),
       ),
     );
   }
 
   @override
-  void dispose() async {
+  void dispose() {
     super.dispose();
-    try {
-      await ScreenBrightness().resetScreenBrightness();
-    } catch (e) {
-      print(e);
-      throw 'Failed to reset brightness';
-    }
     player.release();
   }
 }
 ```
 
-## 鸣谢以下项目
-* [fijkplayer](https://github.com/befovy/fijkplayer)
-* [ijkplayer](https://github.com/bilibili/ijkplayer)
-* [ffmpeg](https://github.com/FFmpeg/FFmpeg)
+## Advanced Usage 高级用法
 
-## iOS Warning 警告
+### Video List 视频列表
 
-Warning: The fplayer video player plugin is not functional on iOS simulators. An iOS device must be used during development/testing. For more details, please refer to this [issue](https://github.com/flutter/flutter/issues/14647).
+```dart
+List<VideoItem> videoList = [
+  VideoItem(
+    url: 'https://example.com/video1.mp4',
+    title: '第一集',
+    subTitle: '视频1副标题',
+  ),
+  VideoItem(
+    url: 'https://example.com/video2.mp4',
+    title: '第二集',
+    subTitle: '视频2副标题',
+  ),
+];
 
-<span><small>感谢您的关注！开源不易，需要开发者们的不断努力和付出。如果您觉得我的项目对您有所帮助，希望能够支持我继续改进和维护这个项目，您可以考虑打赏我一杯咖啡的钱。
-您的支持将是我继续前进的动力，让我能够更加专注地投入到开源社区中，让我的项目变得更加完善和有用。如果您决定打赏我，可以通过以下方式：</small></span>
-<ul>
-    <li>给该项目点赞 &nbsp;<a style="vertical-align: text-bottom;" href="https://github.com/FlutterPlayer/fplayer">
-      <img src="https://img.shields.io/github/stars/FlutterPlayer/fplayer.svg?label=Stars&style=social" alt="给该项目点赞" />
-    </a></li>
-    <li>关注我的 Github &nbsp;<a style="vertical-align: text-bottom;"  href="https://github.com/FlutterPlayer">
-      <img src="https://img.shields.io/github/followers/FlutterPlayer.svg?label=Follow&style=social" alt="关注我的 Github" />
-    </a></li>
-</ul>
-<table>
-    <thead><tr>
-        <th>微信</th>
-        <th>支付宝</th>
-    </tr></thead>
-    <tbody><tr>
-        <td><img style="max-width: 150px" src="/images/wx.png" alt="微信" /></td>
-        <td><img style="max-width: 150px" src="/images/zfb.png" alt="支付宝" /></td>
-    </tr></tbody>
-</table>
-再次感谢您的支持和慷慨，让我们一起为开源社区贡献一份力量！
+FView(
+  player: player,
+  panelBuilder: fPanelBuilder(
+    isVideos: true,
+    videoList: videoList,
+    videoIndex: 0,
+    playNextVideoFun: () {
+      // 播放下一集
+    },
+  ),
+)
+```
+
+### Speed Control 倍速控制
+
+```dart
+Map<String, double> speedList = {
+  "2.0x": 2.0,
+  "1.5x": 1.5,
+  "1.0x": 1.0,
+  "0.5x": 0.5,
+};
+
+fPanelBuilder(
+  speedList: speedList,
+)
+```
+
+### Resolution Switching 清晰度切换
+
+```dart
+Map<String, ResolutionItem> resolutionList = {
+  "1080P": ResolutionItem(
+    value: 1080,
+    url: 'https://example.com/video_1080p.mp4',
+  ),
+  "720P": ResolutionItem(
+    value: 720,
+    url: 'https://example.com/video_720p.mp4',
+  ),
+};
+
+fPanelBuilder(
+  isResolution: true,
+  resolutionList: resolutionList,
+)
+```
+
+### Screenshot 截屏
+
+```dart
+fPanelBuilder(
+  isSnapShot: true,
+)
+```
+
+### Preview / Trial Watch 试看功能
+
+```dart
+fPanelBuilder(
+  tipTime: 30, // 试看30秒
+  tipWidget: CustomTipWidget(), // 自定义试看结束提示
+  onTipShow: () {
+    // 试看结束回调
+  },
+)
+```
+
+### Time Change Callback 时间更新回调
+
+```dart
+fPanelBuilder(
+  onVideoTimeChange: (Duration duration) {
+    print('Current position: $duration');
+  },
+  onVideoTimeChangeInterval: 10, // 每10次位置更新触发一次回调
+)
+```
+
+### Callbacks 回调
+
+```dart
+fPanelBuilder(
+  onError: () async {
+    await player.reset();
+    // 处理播放错误
+  },
+  onVideoEnd: () async {
+    // 视频播放完成
+  },
+  onVideoPrepared: () async {
+    // 视频准备完成，可以进行 seekTo 等操作
+  },
+  onVideoStateChange: (FState state, bool isPlaying) {
+    // 播放状态变化
+  },
+)
+```
+
+### Custom Right Button 自定义右侧按钮
+
+```dart
+fPanelBuilder(
+  isRightButton: true,
+  rightButtonList: [
+    IconButton(
+      icon: Icon(Icons.favorite),
+      onPressed: () {},
+    ),
+    IconButton(
+      icon: Icon(Icons.share),
+      onPressed: () {},
+    ),
+  ],
+)
+```
+
+## Configuration 配置
+
+```dart
+await player.setOption(FOption.hostCategory, "enable-snapshot", 1);
+await player.setOption(FOption.hostCategory, "request-screen-on", 1);
+await player.setOption(FOption.hostCategory, "request-audio-focus", 1);
+await player.setOption(FOption.playerCategory, "reconnect", 20);
+await player.setOption(FOption.playerCategory, "framedrop", 20);
+await player.setOption(FOption.playerCategory, "enable-accurate-seek", 1);
+await player.setOption(FOption.playerCategory, "mediacodec", 1);
+await player.setOption(FOption.playerCategory, "packet-buffering", 0);
+await player.setOption(FOption.playerCategory, "soundtouch", 1);
+```
+
+## API Reference API 参考
+
+### FPlayer
+
+| Method | Description |
+|--------|-------------|
+| `setDataSource(String url, {bool autoPlay, bool showCover})` | 设置视频源 |
+| `prepareAsync()` | 异步准备播放 |
+| `start()` | 开始播放 |
+| `pause()` | 暂停播放 |
+| `stop()` | 停止播放 |
+| `seekTo(Duration position)` | 跳转进度 |
+| `takeSnapShot()` | 截屏 |
+| `release()` | 释放资源 |
+
+### fPanelBuilder Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `title` | `String` | `''` | 视频标题 |
+| `subTitle` | `String` | `''` | 视频副标题 |
+| `isVideos` | `bool` | `false` | 是否显示视频列表 |
+| `videoList` | `List<VideoItem>` | `null` | 视频列表 |
+| `videoIndex` | `int` | `0` | 当前视频索引 |
+| `isSnapShot` | `bool` | `false` | 是否显示截屏按钮 |
+| `isResolution` | `bool` | `false` | 是否显示清晰度切换 |
+| `speedList` | `Map<String, double>` | `null` | 倍速列表 |
+| `resolutionList` | `Map<String, ResolutionItem>` | `null` | 清晰度列表 |
+| `isRightButton` | `bool` | `false` | 是否显示右侧按钮 |
+| `rightButtonList` | `List<Widget>` | `null` | 右侧按钮列表 |
+| `doubleTap` | `bool` | `true` | 是否启用双击播放/暂停 |
+| `hideDuration` | `int` | `5000` | 控制栏自动隐藏时间(毫秒) |
+| `tipTime` | `int` | `-1` | 试看时间(秒)，-1表示无需试看 |
+| `tipWidget` | `Widget` | `null` | 自定义试看结束提示组件 |
+| `onVideoTimeChange` | `Function(Duration)` | `null` | 时间更新回调 |
+| `onVideoTimeChangeInterval` | `int` | `50` | 时间更新回调触发间隔 |
+| `onError` | `Function()` | `null` | 播放错误回调 |
+| `onVideoEnd` | `Function()` | `null` | 播放结束回调 |
+| `onVideoPrepared` | `Function()` | `null` | 准备完成回调 |
+| `onTipShow` | `Function()` | `null` | 试看结束回调 |
+| `settingFun` | `Function()` | `null` | 设置按钮点击回调 |
+| `playNextVideoFun` | `Function()` | `null` | 播放下一集回调 |
+
+## iOS Note
+
+Note: The fplayer video player plugin may not function properly on iOS simulators. An iOS device is recommended for development and testing.
+
+## License 许可证
+
+MIT License
+
+## Acknowledgments 鸣谢
+
+- [fijkplayer](https://github.com/befovy/fijkplayer)
+- [ijkplayer](https://github.com/bilibili/ijkplayer)
+- [ffmpeg](https://github.com/FFmpeg/FFmpeg)
+- [fplayer](https://github.com/FlutterPlayer/fplayer)
