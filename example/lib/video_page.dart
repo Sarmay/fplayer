@@ -201,6 +201,24 @@ class VideoScreenState extends State<VideoScreen> {
                 resolutionList: resolutionList,
                 // 试看功能配置
                 tipTime: tipTimeList[videoIndex],
+                // 试看结束提示Widget
+                tipWidget: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: const Text(
+                    '试看已结束',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                onTipShow: () {
+                  print('试看结束');
+                },
                 // 视频播放错误点击刷新回调
                 onError: () async {
                   await player.reset();
