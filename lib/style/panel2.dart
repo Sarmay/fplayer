@@ -63,6 +63,15 @@ FPanelWidgetBuilder fPanelBuilder({
 
   /// 视频状态变更
   final void Function(FState, bool)? onVideoStateChange,
+
+  /// 试看时间（秒），0表示无需试看，-1表示免费（无限制），大于0表示试看秒数
+  final int tipTime = -1,
+
+  /// 试看结束提示Widget
+  final Widget? tipWidget,
+
+  /// 试看结束回调
+  final void Function()? onTipShow,
 }) {
   return (FPlayer player, FData data, BuildContext context, Size viewSize,
       Rect texturePos, Color color) {
@@ -96,6 +105,9 @@ FPanelWidgetBuilder fPanelBuilder({
       onVideoPrepared: onVideoPrepared,
       onVideoTimeChange: onVideoTimeChange,
       onVideoStateChange: onVideoStateChange,
+      tipTime: tipTime,
+      tipWidget: tipWidget,
+      onTipShow: onTipShow,
     );
   };
 }
@@ -149,6 +161,9 @@ class _FPanel2 extends StatefulWidget {
   final void Function()? onVideoPrepared;
   final void Function(Duration)? onVideoTimeChange;
   final void Function(FState, bool)? onVideoStateChange;
+  final int tipTime;
+  final Widget? tipWidget;
+  final void Function()? onTipShow;
 
   const _FPanel2({
     Key? key,
@@ -180,6 +195,9 @@ class _FPanel2 extends StatefulWidget {
     this.onVideoPrepared,
     this.onVideoTimeChange,
     this.onVideoStateChange,
+    this.tipTime = -1,
+    this.tipWidget,
+    this.onTipShow,
   })  : assert(hideDuration > 0 && hideDuration < 10000),
         super(key: key);
 
@@ -235,6 +253,10 @@ class __FPanel2State extends State<_FPanel2> {
   late StreamSubscription _bufferingSubs;
 
   int sendCount = 0;
+
+  /// 试看功能相关
+  bool _tipShowing = false;
+  bool _tipTriggered = false;
 
   Map<String, double> speedList = {
     "2.0": 2.0,
@@ -331,6 +353,12 @@ class __FPanel2State extends State<_FPanel2> {
     _isPlayError = playerState == FState.error;
     _isPlayCompleted = playerState == FState.completed;
 
+    /// 初始化试看状态，确保全屏退出后状态同步
+    if (player.isTipShown) {
+      _tipShowing = true;
+      _tipTriggered = true;
+    }
+
     /// 当前进度
     _currentPosSubs = player.onCurrentPosUpdate.listen((v) {
       setState(() {
@@ -351,6 +379,9 @@ class __FPanel2State extends State<_FPanel2> {
         widget.onVideoTimeChange?.call(v);
       }
       sendCount++;
+
+      /// 试看功能：检查是否到达试看时间
+      _checkTipTime(v);
     });
 
     if (widget.data.contains(FData._fViewPanelSeekto)) {
@@ -466,8 +497,25 @@ class __FPanel2State extends State<_FPanel2> {
     if (_playStatePrepared != playStatePrepared) {
       if (playStatePrepared) {
         widget.onVideoPrepared?.call();
+        // 视频准备就绪时，检查是否需要立即显示试看提示
+        if (widget.tipTime == 0 && !_tipTriggered) {
+          _checkTipTime(Duration.zero);
+        }
       }
       _playStatePrepared = playStatePrepared;
+    }
+
+    /// 当播放器状态变化时（如从全屏退出），保持试看提示状态
+    if (player.isTipShown && !_tipShowing) {
+      setState(() {
+        _tipShowing = true;
+        _tipTriggered = true;
+      });
+    }
+
+    /// 当数据源变化时（切换视频），重置试看状态
+    if (valueState == FState.idle || valueState == FState.initialized) {
+      _resetTipState();
     }
 
     /// 播放器状态变更回调
@@ -523,6 +571,99 @@ class __FPanel2State extends State<_FPanel2> {
     } else {
       FLog.w("Invalid state ${player.state} ,can't perform play or pause");
     }
+  }
+
+  /// 检查是否到达试看时间
+  void _checkTipTime(Duration currentPos) {
+    // tipTime > 0: 试看模式，到达指定秒数后暂停并显示提示
+    // tipTime == 0: 需要购买，立即显示提示
+    // tipTime == -1: 免费视频，无限制
+    if (widget.tipTime == -1) return; // 免费视频，无限制
+    if (_tipTriggered) return;
+
+    if (widget.tipTime == 0) {
+      // 需要购买，立即显示提示
+      _tipTriggered = true;
+      _showTip();
+    } else {
+      // 试看模式，到达指定秒数后显示提示
+      final tipDuration = Duration(seconds: widget.tipTime);
+      if (currentPos >= tipDuration) {
+        _tipTriggered = true;
+        _showTip();
+      }
+    }
+  }
+
+  /// 显示试看提示
+  void _showTip() {
+    if (!mounted) return;
+
+    // 暂停视频
+    _pauseVideo();
+
+    // 注册关闭回调
+    player._setOnCloseTipCallback(() {
+      if (mounted) {
+        setState(() {
+          _tipShowing = false;
+        });
+      }
+    });
+
+    setState(() {
+      _tipShowing = true;
+      _tipTriggered = true;
+    });
+
+    // 触发回调
+    widget.onTipShow?.call();
+  }
+
+  /// 暂停视频，确保暂停成功
+  void _pauseVideo() {
+    player._setTipShown(true);
+
+    // 立即尝试暂停
+    _tryPause();
+
+    // 如果视频仍在播放，持续尝试暂停直到成功
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(milliseconds: 50));
+      if (player.state == FState.started && mounted) {
+        _tryPause();
+        return true;
+      }
+      return false;
+    });
+  }
+
+  void _tryPause() {
+    try {
+      if (player.isPlayable()) {
+        player.pause();
+      }
+    } catch (e) {
+      print("暂停视频失败: $e");
+    }
+  }
+
+  /// 关闭试看提示并继续播放（供外部调用）
+  void closeTip() {
+    if (_tipShowing) {
+      _tipShowing = false;
+      player._setTipShown(false);
+      player._setOnCloseTipCallback(null);
+      player.start();
+    }
+  }
+
+  /// 重置试看状态（切换视频时调用）
+  void _resetTipState() {
+    _tipShowing = false;
+    _tipTriggered = false;
+    player._setTipShown(false);
+    player._setOnCloseTipCallback(null);
   }
 
   Future<void> playNextVideo() async {
@@ -1819,11 +1960,77 @@ class __FPanel2State extends State<_FPanel2> {
         );
       }
       ws.add(buildGestureDetector(context));
+
+      // 试看提示
+      if (_tipShowing) {
+        ws.add(_buildTipWidget());
+      }
     }
 
     return Positioned.fromRect(
       rect: rect,
       child: Stack(children: ws),
+    );
+  }
+
+  /// 构建试看提示Widget
+  Widget _buildTipWidget() {
+    return Container(
+      color: Colors.black54,
+      width: double.infinity,
+      height: double.infinity,
+      child: widget.tipWidget ??
+          Container(
+            color: Colors.black87,
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // 只在全屏模式下显示返回按钮
+                if (player.value.fullScreen)
+                  Align(
+                    alignment: Alignment.topLeft,
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        player.exitFullScreen();
+                      },
+                    ),
+                  ),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.lock_outline,
+                        color: Colors.white,
+                        size: 64,
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        '试看已结束',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        '购买后可观看完整视频',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
     );
   }
 }

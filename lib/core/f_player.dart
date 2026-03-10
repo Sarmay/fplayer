@@ -89,6 +89,10 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
   final Completer<int> _nativeSetup;
   Completer<Uint8List>? _snapShot;
 
+  // 试看功能相关
+  bool _tipShown = false;
+  VoidCallback? _onCloseTipCallback;
+
   FPlayer()
       : _nativeSetup = Completer(),
         _value = const FValue.uninitialized(),
@@ -570,6 +574,29 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
     FLog.e("$this errorListener: $exception");
     _setValue(value.copyWith(exception: exception, state: FState.error));
   }
+
+  /// 试看功能：关闭提示并继续播放
+  /// 外部调用此方法关闭试看提示并继续播放视频
+  void closeTip() {
+    if (_tipShown) {
+      _tipShown = false;
+      _onCloseTipCallback?.call();
+      start();
+    }
+  }
+
+  /// 设置试看提示状态（内部使用）
+  void _setTipShown(bool shown) {
+    _tipShown = shown;
+  }
+
+  /// 注册关闭试看提示的回调（内部使用）
+  void _setOnCloseTipCallback(VoidCallback? callback) {
+    _onCloseTipCallback = callback;
+  }
+
+  /// 获取试看提示是否已显示
+  bool get isTipShown => _tipShown;
 
   @override
   String toString() {

@@ -17,49 +17,39 @@ class VideoScreen extends StatefulWidget {
 class VideoScreenState extends State<VideoScreen> {
   final FPlayer player = FPlayer();
 
-  // 视频列表
+  // 视频列表（带试看配置）
+  // tipTime: 试看秒数，0表示无需试看，-1表示免费（无限制），大于0表示试看秒数
   List<VideoItem> videoList = [
     VideoItem(
-      title: '第一集',
-      subTitle: '视频1副标题',
+      title: '第一集（试看10秒）',
+      subTitle: '付费视频，可试看10秒',
       url: 'http://player.alicdn.com/video/aliyunmedia.mp4',
     ),
     VideoItem(
-      title: '404',
-      subTitle: '视频2副标题',
-      url: 'https://fplayer.dev/butterfly.flv',
-    ),
-    VideoItem(
-      title: '第二集',
-      subTitle: '视频2副标题',
+      title: '第二集（免费）',
+      subTitle: '免费视频，无限制',
       url: 'https://www.runoob.com/try/demo_source/mov_bbb.mp4',
     ),
     VideoItem(
-      title: '第三集',
-      subTitle: '视频3副标题',
+      title: '第三集（试看5秒）',
+      subTitle: '付费视频，可试看5秒',
       url: 'https://cdn.wlcdn88.com:777/dfc69d3a/index.m3u8',
     ),
     VideoItem(
-      title: '第四集',
-      subTitle: '视频4副标题',
+      title: '第四集（需购买）',
+      subTitle: '付费视频，无试看',
       url: 'https://www.runoob.com/try/demo_source/mov_bbb.mp4',
     ),
     VideoItem(
-      title: '第五集',
-      subTitle: '视频5副标题',
+      title: '第五集（试看15秒）',
+      subTitle: '付费视频，可试看15秒',
       url: 'http://player.alicdn.com/video/aliyunmedia.mp4',
     ),
-    VideoItem(
-      title: '第六集',
-      subTitle: '视频6副标题',
-      url: 'https://www.runoob.com/try/demo_source/mov_bbb.mp4',
-    ),
-    VideoItem(
-      title: '第七集',
-      subTitle: '视频7副标题',
-      url: 'http://player.alicdn.com/video/aliyunmedia.mp4',
-    )
   ];
+
+  // 每个视频的试看配置（与videoList索引对应）
+  // tipTime: 试看秒数，0表示无需试看，-1表示免费（无限制），大于0表示试看秒数
+  List<int> tipTimeList = [10, -1, 5, 0, 15];
 
   // 倍速列表
   Map<String, double> speedList = {
@@ -209,6 +199,8 @@ class VideoScreenState extends State<VideoScreen> {
                 isResolution: true,
                 // 自定义清晰度列表
                 resolutionList: resolutionList,
+                // 试看功能配置
+                tipTime: tipTimeList[videoIndex],
                 // 视频播放错误点击刷新回调
                 onError: () async {
                   await player.reset();
