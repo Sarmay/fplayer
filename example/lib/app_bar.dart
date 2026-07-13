@@ -16,14 +16,13 @@ class SettingMenu extends StatelessWidget {
 }
 
 class FAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const FAppBar({Key? key, required this.title, this.actions})
-      : super(key: key);
+  const FAppBar({super.key, required this.title, this.actions});
 
   final String title;
   final List<Widget>? actions;
 
   const FAppBar.defaultSetting({super.key, required this.title})
-      : actions = null;
+    : actions = null;
   // todo settings page
   //: actions=<Widget>[SettingMenu()];
 
@@ -31,10 +30,7 @@ class FAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return PreferredSize(
       preferredSize: preferredSize,
-      child: AppBar(
-        title: Text(title),
-        actions: actions,
-      ),
+      child: AppBar(title: Text(title), actions: actions),
     );
   }
 

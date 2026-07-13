@@ -1,5 +1,6 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:sarmay_fplayer/fplayer.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 
@@ -173,7 +174,7 @@ class VideoScreenState extends State<VideoScreen> {
                         color: Theme.of(context).primaryColor,
                       ),
                     ),
-                  )
+                  ),
                 ],
                 // 字幕功能：待内核提供api
                 // caption: true,
@@ -205,15 +206,12 @@ class VideoScreenState extends State<VideoScreen> {
                 tipWidget: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.8),
+                    color: Colors.red.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(5),
                   ),
                   child: const Text(
                     '试看已结束',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ),
                 onTipShow: () {
@@ -317,18 +315,12 @@ class VideoScreenState extends State<VideoScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(5),
                         color: bgColor,
-                        border: Border.all(
-                          width: 1.5,
-                          color: borderColor,
-                        ),
+                        border: Border.all(width: 1.5, color: borderColor),
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         videoList[index].title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: textColor,
-                        ),
+                        style: TextStyle(fontSize: 15, color: textColor),
                       ),
                     ),
                   );
@@ -342,14 +334,13 @@ class VideoScreenState extends State<VideoScreen> {
   }
 
   @override
-  void dispose() async {
+  void dispose() {
+    unawaited(
+      ScreenBrightness().resetApplicationScreenBrightness().catchError((error) {
+        debugPrint('Failed to reset brightness: $error');
+      }),
+    );
+    unawaited(player.release());
     super.dispose();
-    try {
-      await ScreenBrightness().resetScreenBrightness();
-    } catch (e) {
-      print(e);
-      throw 'Failed to reset brightness';
-    }
-    player.release();
   }
 }

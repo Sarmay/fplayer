@@ -27,7 +27,11 @@ Widget defaultFVolumeToast(double value, Stream<double> emitter, Color color) {
   return _FSliderToast(value, 0, emitter, color);
 }
 
-Widget defaultFBrightnessToast(double value, Stream<double> emitter, Color color) {
+Widget defaultFBrightnessToast(
+  double value,
+  Stream<double> emitter,
+  Color color,
+) {
   return _FSliderToast(value, 1, emitter, color);
 }
 
@@ -55,6 +59,7 @@ class _FSliderToastState extends State<_FSliderToast> {
     super.initState();
     value = widget.initial;
     subs = widget.emitter.listen((v) {
+      if (!mounted) return;
       setState(() {
         value = v;
       });
@@ -63,8 +68,8 @@ class _FSliderToastState extends State<_FSliderToast> {
 
   @override
   void dispose() {
-    super.dispose();
     subs?.cancel();
+    super.dispose();
   }
 
   @override
@@ -89,10 +94,7 @@ class _FSliderToastState extends State<_FSliderToast> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(
-                iconData,
-                color: Colors.white,
-              ),
+              Icon(iconData, color: Colors.white),
               Container(
                 width: 100,
                 height: 1.5,

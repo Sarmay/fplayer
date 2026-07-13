@@ -3,19 +3,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sarmay_fplayer/fplayer_method_channel.dart';
 
 void main() {
-  MethodChannelFplayer platform = MethodChannelFplayer();
-  const MethodChannel channel = MethodChannel('fplayer');
-
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  final platform = MethodChannelFplayer();
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
   setUp(() {
-    channel.setMockMethodCallHandler((MethodCall methodCall) async {
-      return '42';
-    });
+    messenger.setMockMethodCallHandler(
+      platform.methodChannel,
+      (MethodCall methodCall) async => '42',
+    );
   });
 
   tearDown(() {
-    channel.setMockMethodCallHandler(null);
+    messenger.setMockMethodCallHandler(platform.methodChannel, null);
   });
 
   test('getPlatformVersion', () async {

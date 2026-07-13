@@ -6,7 +6,8 @@ description: Demonstrates how to use the fplayer plugin.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 environment:
-  sdk: '>=2.18.0 <3.0.0'
+  sdk: ^3.11.3
+  flutter: ">=3.41.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -19,6 +20,7 @@ dependencies:
     sdk: flutter
 
   streaming_shared_preferences: ^2.0.0
+  screen_brightness: ^2.1.11
 
   sarmay_fplayer:
     # When depending on this package from a real application you should use:
@@ -41,7 +43,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.0
+  flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

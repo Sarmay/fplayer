@@ -35,7 +35,7 @@ class _MyAppState extends State<MyApp> {
         textButtonTheme: TextButtonThemeData(
           style: ButtonStyle(
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            overlayColor: MaterialStateProperty.all(Colors.transparent),
+            overlayColor: WidgetStateProperty.all(Colors.transparent),
           ),
         ),
       ),

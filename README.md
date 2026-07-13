@@ -25,8 +25,10 @@ Add `sarmay_fplayer` as a dependency in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  sarmay_fplayer: ^1.1.13
+  sarmay_fplayer: ^1.1.15
 ```
+
+Requires Flutter 3.41 or newer and Dart 3.11 or newer.
 
 Or use git:
 
@@ -35,14 +37,14 @@ dependencies:
   sarmay_fplayer:
     git:
       url: https://github.com/Sarmay/fplayer.git
-      ref: main
+      ref: master
 ```
 
 ## Quick Start 快速开始
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:sarmay_fplayer/sarmay_fplayer.dart';
+import 'package:sarmay_fplayer/fplayer.dart';
 
 class VideoScreen extends StatefulWidget {
   const VideoScreen({super.key});

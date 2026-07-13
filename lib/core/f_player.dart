@@ -94,9 +94,9 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
   VoidCallback? _onCloseTipCallback;
 
   FPlayer()
-      : _nativeSetup = Completer(),
-        _value = const FValue.uninitialized(),
-        super() {
+    : _nativeSetup = Completer(),
+      _value = const FValue.uninitialized(),
+      super() {
     FLog.d("create new fplayer");
     _doNativeSetup();
   }
@@ -154,10 +154,9 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
 
     _allInstance[_playerId] = this;
     _channel = MethodChannel('befovy.com/fijkplayer/$_playerId');
-    _nativeEventSubscription =
-        EventChannel('befovy.com/fijkplayer/event/$_playerId')
-            .receiveBroadcastStream()
-            .listen(_eventListener, onError: _errorListener);
+    _nativeEventSubscription = EventChannel(
+      'befovy.com/fijkplayer/event/$_playerId',
+    ).receiveBroadcastStream().listen(_eventListener, onError: _errorListener);
     _nativeSetup.complete(_playerId);
 
     _channel.setMethodCallHandler(_handler);
@@ -185,16 +184,23 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
     await _nativeSetup.future;
     if (value is String) {
       FLog.i("$this setOption k:$key, v:$value");
-      return _channel.invokeMethod("setOption",
-          <String, dynamic>{"cat": category, "key": key, "str": value});
+      return _channel.invokeMethod("setOption", <String, dynamic>{
+        "cat": category,
+        "key": key,
+        "str": value,
+      });
     } else if (value is int) {
       FLog.i("$this setOption k:$key, v:$value");
-      return _channel.invokeMethod("setOption",
-          <String, dynamic>{"cat": category, "key": key, "long": value});
+      return _channel.invokeMethod("setOption", <String, dynamic>{
+        "cat": category,
+        "key": key,
+        "long": value,
+      });
     } else {
       FLog.e("$this setOption invalid value: $value");
       return Future.error(
-          ArgumentError.value(value, "value", "Must be int or String"));
+        ArgumentError.value(value, "value", "Must be int or String"),
+      );
     }
   }
 
@@ -271,31 +277,30 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
     if (path.isEmpty || Uri.tryParse(path) == null) {
       FLog.e("$this setDataSource invalid path:$path");
       return Future.error(
-          ArgumentError.value(path, "path must be a valid url"));
+        ArgumentError.value(path, "path must be a valid url"),
+      );
     }
     if (autoPlay == true && showCover == true) {
       FLog.w(
-          "call setDataSource with both autoPlay and showCover true, showCover will be ignored");
+        "call setDataSource with both autoPlay and showCover true, showCover will be ignored",
+      );
     }
     await _nativeSetup.future;
     if (state == FState.idle || state == FState.initialized) {
       try {
         FLog.i("$this invoke setDataSource $path");
         _dataSource = path;
-        await _channel
-            .invokeMethod("setDataSource", <String, dynamic>{'url': path});
+        await _channel.invokeMethod("setDataSource", <String, dynamic>{
+          'url': path,
+        });
       } on PlatformException catch (e) {
         return _errorListener(e);
       }
       if (headers != null) {
-        String headersStr = '';
-        headers.forEach((key, value) {
-          if (headersStr.isNotEmpty) {
-            headersStr = '\r\n$headersStr';
-          }
-          headersStr = '$key: ${value ?? ''}$headersStr';
-        });
-        setOption(FOption.formatCategory, 'headers', headersStr);
+        final headersStr = headers.entries
+            .map((entry) => '${entry.key}: ${entry.value ?? ''}')
+            .join('\r\n');
+        await setOption(FOption.formatCategory, 'headers', headersStr);
       }
       if (autoPlay == true) {
         await start();
@@ -332,12 +337,14 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
     if (volume < 0) {
       FLog.e("$this invoke seekTo invalid volume:$volume");
       return Future.error(
-          ArgumentError.value(volume, "setVolume invalid volume"));
+        ArgumentError.value(volume, "setVolume invalid volume"),
+      );
     } else {
       await _nativeSetup.future;
       FLog.i("$this invoke setVolume $volume");
-      return _channel
-          .invokeMethod("setVolume", <String, dynamic>{"volume": volume});
+      return _channel.invokeMethod("setVolume", <String, dynamic>{
+        "volume": volume,
+      });
     }
   }
 
@@ -424,7 +431,8 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
     if (msec < 0) {
       FLog.e("$this invoke seekTo invalid msec:$msec");
       return Future.error(
-          ArgumentError.value(msec, "speed must be not null and >= 0"));
+        ArgumentError.value(msec, "speed must be not null and >= 0"),
+      );
     } else if (!isPlayable()) {
       FLog.e("$this invoke seekTo invalid state:$state");
       return Future.error(StateError("Non playable state $state"));
@@ -461,12 +469,14 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
     await _nativeSetup.future;
     if (loopCount < 0) {
       FLog.e("$this invoke setLoop invalid loopCount:$loopCount");
-      return Future.error(ArgumentError.value(
-          loopCount, "loopCount must not be null and >= 0"));
+      return Future.error(
+        ArgumentError.value(loopCount, "loopCount must not be null and >= 0"),
+      );
     } else {
       FLog.i("$this invoke setLoop $loopCount");
-      return _channel
-          .invokeMethod("setLoop", <String, dynamic>{"loop": loopCount});
+      return _channel.invokeMethod("setLoop", <String, dynamic>{
+        "loop": loopCount,
+      });
     }
   }
 
@@ -478,8 +488,9 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
     await _nativeSetup.future;
     if (speed <= 0) {
       FLog.e("$this invoke setSpeed invalid speed:$speed");
-      return Future.error(ArgumentError.value(
-          speed, "speed must be not null and greater than 0"));
+      return Future.error(
+        ArgumentError.value(speed, "speed must be not null and greater than 0"),
+      );
     } else {
       FLog.i("$this invoke setSpeed $speed");
       _channel.invokeMethod("setSpeed", <String, dynamic>{"speed": speed});
@@ -510,14 +521,25 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
 
         if (fpState != oldState) {
           FLog.i("$this state changed to $fpState <= $oldState");
-          FException? fException =
-              (fpState != FState.error) ? FException.noException : null;
+          FException? fException = (fpState != FState.error)
+              ? FException.noException
+              : null;
           if (newStateId == FState.prepared.index) {
-            _setValue(value.copyWith(
-                prepared: true, state: fpState, exception: fException));
+            _setValue(
+              value.copyWith(
+                prepared: true,
+                state: fpState,
+                exception: fException,
+              ),
+            );
           } else if (newStateId < FState.prepared.index) {
-            _setValue(value.copyWith(
-                prepared: false, state: fpState, exception: fException));
+            _setValue(
+              value.copyWith(
+                prepared: false,
+                state: fpState,
+                exception: fException,
+              ),
+            );
           } else {
             _setValue(value.copyWith(state: fpState, exception: fException));
           }
@@ -569,8 +591,9 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
   }
 
   void _errorListener(Object obj) {
-    final PlatformException e = obj as PlatformException;
-    FException exception = FException.fromPlatformException(e);
+    final FException exception = obj is PlatformException
+        ? FException.fromPlatformException(obj)
+        : FException(FException.unknown, obj.toString());
     FLog.e("$this errorListener: $exception");
     _setValue(value.copyWith(exception: exception, state: FState.error));
   }

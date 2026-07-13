@@ -1,16 +1,24 @@
 part of fplayer;
 
-typedef FPanelWidgetBuilder = Widget Function(FPlayer player, FData data,
-    BuildContext context, Size viewSize, Rect texturePos, Color color);
+typedef FPanelWidgetBuilder =
+    Widget Function(
+      FPlayer player,
+      FData data,
+      BuildContext context,
+      Size viewSize,
+      Rect texturePos,
+      Color color,
+    );
 
 /// How a video should be inscribed into [FView].
 ///
 /// See also [BoxFit]
 class FFit {
-  const FFit(
-      {this.alignment = Alignment.center,
-      this.aspectRatio = -1,
-      this.sizeFactor = 1.0});
+  const FFit({
+    this.alignment = Alignment.center,
+    this.aspectRatio = -1,
+    this.sizeFactor = 1.0,
+  });
 
   /// [Alignment] for this [FView] Container.
   /// alignment is applied to Texture inner FView
@@ -147,9 +155,8 @@ class FView extends StatefulWidget {
 
 class _FViewState extends State<FView> {
   int _textureId = -1;
-  double _vWidth = -1;
-  double _vHeight = -1;
   bool _fullScreen = false;
+  bool _isSettingUpTexture = false;
 
   final FData _fData = FData();
   ValueNotifier<int> paramNotifier = ValueNotifier(0);
@@ -157,11 +164,6 @@ class _FViewState extends State<FView> {
   @override
   void initState() {
     super.initState();
-    Size? s = widget.player.value.size;
-    if (s != null) {
-      _vWidth = s.width;
-      _vHeight = s.height;
-    }
     widget.player.addListener(_fValueListener);
     _nativeSetup();
   }
@@ -173,21 +175,28 @@ class _FViewState extends State<FView> {
     paramNotifier.value = paramNotifier.value + 1;
   }
 
-  void _setupTexture() async {
-    final int? vid = await widget.player.setupSurface();
-    if (vid == null) {
-      FLog.e("failed to set surface");
-      return;
-    }
-    FLog.i("view setup, vid:$vid");
-    if (mounted) {
-      setState(() {
-        _textureId = vid;
-      });
+  Future<void> _setupTexture() async {
+    if (_isSettingUpTexture || _textureId >= 0) return;
+    _isSettingUpTexture = true;
+    try {
+      final int? vid = await widget.player.setupSurface();
+      if (vid == null) {
+        FLog.e("failed to set surface");
+        return;
+      }
+      FLog.i("view setup, vid:$vid");
+      if (mounted) {
+        setState(() {
+          _textureId = vid;
+        });
+      }
+    } finally {
+      _isSettingUpTexture = false;
     }
   }
 
   void _fValueListener() async {
+    if (!mounted) return;
     FValue value = widget.player.value;
     if (value.prepared && _textureId < 0) {
       _setupTexture();
@@ -201,20 +210,11 @@ class _FViewState extends State<FView> {
         Navigator.of(context).pop();
         _fullScreen = false;
       }
-
-      // save width and height to make judgement about whether to
-      // request landscape when enter full screen mode
-      Size? size = value.size;
-      if (size != null && value.prepared) {
-        _vWidth = size.width;
-        _vHeight = size.height;
-      }
     }
   }
 
   @override
   void dispose() {
-    super.dispose();
     widget.player.removeListener(_fValueListener);
 
     var brightness = _fData.getValue(FData._fViewPanelBrightness);
@@ -230,10 +230,14 @@ class _FViewState extends State<FView> {
     }
 
     widget.onDispose?.call(_fData);
+    paramNotifier.dispose();
+    super.dispose();
   }
 
   AnimatedWidget _defaultRoutePageBuilder(
-      BuildContext context, Animation<double> animation) {
+    BuildContext context,
+    Animation<double> animation,
+  ) {
     return AnimatedBuilder(
       animation: animation,
       builder: (BuildContext context, Widget? child) {
@@ -250,8 +254,11 @@ class _FViewState extends State<FView> {
     );
   }
 
-  Widget _fullScreenRoutePageBuilder(BuildContext context,
-      Animation<double> animation, Animation<double> secondaryAnimation) {
+  Widget _fullScreenRoutePageBuilder(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) {
     return _defaultRoutePageBuilder(context, animation);
   }
 
@@ -261,9 +268,11 @@ class _FViewState extends State<FView> {
       pageBuilder: _fullScreenRoutePageBuilder,
     );
 
-    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky,
-        overlays: []);
-    var orientation = MediaQuery.of(context).orientation;
+    final orientation = MediaQuery.orientationOf(context);
+    await SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.immersiveSticky,
+      overlays: [],
+    );
     FLog.d("start enter fullscreen. orientation:$orientation");
 
     // 根据视频宽高判断是否旋转屏幕
@@ -275,17 +284,28 @@ class _FViewState extends State<FView> {
       await FPlugin.setOrientationLandscape();
     }
 
+    if (!mounted) return;
     await Navigator.of(context).push(route);
+    if (!mounted) return;
     _fullScreen = false;
     widget.player.exitFullScreen();
-    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge,
-        overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
+    await SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.edgeToEdge,
+      overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom],
+    );
     await FPlugin.setOrientationPortrait();
   }
 
   @override
-  void didUpdateWidget(Widget oldWidget) {
-    super.didUpdateWidget(oldWidget as FView);
+  void didUpdateWidget(covariant FView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.player != widget.player) {
+      oldWidget.player.removeListener(_fValueListener);
+      widget.player.addListener(_fValueListener);
+      _textureId = -1;
+      _isSettingUpTexture = false;
+      _nativeSetup();
+    }
     paramNotifier.value = paramNotifier.value + 1;
   }
 
@@ -331,7 +351,7 @@ class __InnerFViewState extends State<_InnerFView> {
   int _textureId = -1;
   double _vWidth = -1;
   double _vHeight = -1;
-  final bool _vFullScreen = false;
+  bool _vFullScreen = false;
   int _degree = 0;
   bool _videoRender = false;
 
@@ -347,6 +367,18 @@ class __InnerFViewState extends State<_InnerFView> {
   }
 
   FView get fView => widget.fViewState.widget;
+
+  @override
+  void didUpdateWidget(covariant _InnerFView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nextPlayer = fView.player;
+    if (_player != nextPlayer) {
+      _player.removeListener(_fValueListener);
+      _player = nextPlayer;
+      _player.addListener(_fValueListener);
+      _fValueListener();
+    }
+  }
 
   void _voidValueListener() {
     var binding = WidgetsBinding.instance;
@@ -384,7 +416,12 @@ class __InnerFViewState extends State<_InnerFView> {
         textureId != _textureId ||
         _videoRender != videoRender) {
       if (mounted) {
-        setState(() {});
+        setState(() {
+          _vWidth = width;
+          _vHeight = height;
+          _vFullScreen = fullScreen;
+          _videoRender = videoRender;
+        });
       }
     }
   }
@@ -439,11 +476,15 @@ class __InnerFViewState extends State<_InnerFView> {
   /// calculate Texture size
   Size getTxSize(BoxConstraints constraints, FFit fit) {
     Size childSize = applyAspectRatio(
-        constraints, getAspectRatio(constraints, fit.aspectRatio));
+      constraints,
+      getAspectRatio(constraints, fit.aspectRatio),
+    );
     double sizeFactor = fit.sizeFactor;
     if (-1.0 < sizeFactor && sizeFactor < -0.0) {
-      sizeFactor = max(constraints.maxWidth / childSize.width,
-          constraints.maxHeight / childSize.height);
+      sizeFactor = max(
+        constraints.maxWidth / childSize.width,
+        constraints.maxHeight / childSize.height,
+      );
     } else if (-2.0 < sizeFactor && sizeFactor < -1.0) {
       sizeFactor = constraints.maxWidth / childSize.width;
     } else if (-3.0 < sizeFactor && sizeFactor < -2.0) {
@@ -465,19 +506,16 @@ class __InnerFViewState extends State<_InnerFView> {
   Widget buildTexture() {
     Widget tex = _textureId > 0 ? Texture(textureId: _textureId) : Container();
     if (_degree != 0 && _textureId > 0) {
-      return RotatedBox(
-        quarterTurns: _degree ~/ 90,
-        child: tex,
-      );
+      return RotatedBox(quarterTurns: _degree ~/ 90, child: tex);
     }
     return tex;
   }
 
   @override
   void dispose() {
-    super.dispose();
     fView.player.removeListener(_fValueListener);
-    widget.fViewState.paramNotifier.removeListener(_fValueListener);
+    widget.fViewState.paramNotifier.removeListener(_voidValueListener);
+    super.dispose();
   }
 
   @override
@@ -496,43 +534,56 @@ class __InnerFViewState extends State<_InnerFView> {
     }
     _videoRender = value.videoRenderStart;
 
-    return LayoutBuilder(builder: (ctx, constraints) {
-      // get child size
-      final Size childSize = getTxSize(constraints, _fit);
-      final Offset offset = getTxOffset(constraints, childSize, _fit);
-      final Rect pos = Rect.fromLTWH(
-          offset.dx, offset.dy, childSize.width, childSize.height);
+    return LayoutBuilder(
+      builder: (ctx, constraints) {
+        // get child size
+        final Size childSize = getTxSize(constraints, _fit);
+        final Offset offset = getTxOffset(constraints, childSize, _fit);
+        final Rect pos = Rect.fromLTWH(
+          offset.dx,
+          offset.dy,
+          childSize.width,
+          childSize.height,
+        );
 
-      List ws = <Widget>[
-        Container(
-          width: constraints.maxWidth,
-          height: constraints.maxHeight,
-          color: const Color(0xFF000000),
-        ),
-        Positioned.fromRect(
+        List ws = <Widget>[
+          Container(
+            width: constraints.maxWidth,
+            height: constraints.maxHeight,
+            color: const Color(0xFF000000),
+          ),
+          Positioned.fromRect(
             rect: pos,
             child: Container(
               color: const Color(0xFF000000),
               child: buildTexture(),
-            )),
-      ];
-
-      if (widget.cover != null && !value.videoRenderStart) {
-        ws.add(Positioned.fromRect(
-          rect: pos,
-          child: Image(
-            image: widget.cover!,
-            fit: BoxFit.fill,
+            ),
           ),
-        ));
-      }
+        ];
 
-      if (_panelBuilder != null) {
-        ws.add(_panelBuilder!(_player, data, ctx, constraints.biggest, pos, _color));
-      }
-      return Stack(
-        children: ws as List<Widget>,
-      );
-    });
+        if (widget.cover != null && !value.videoRenderStart) {
+          ws.add(
+            Positioned.fromRect(
+              rect: pos,
+              child: Image(image: widget.cover!, fit: BoxFit.fill),
+            ),
+          );
+        }
+
+        if (_panelBuilder != null) {
+          ws.add(
+            _panelBuilder!(
+              _player,
+              data,
+              ctx,
+              constraints.biggest,
+              pos,
+              _color,
+            ),
+          );
+        }
+        return Stack(children: ws as List<Widget>);
+      },
+    );
   }
 }

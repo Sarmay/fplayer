@@ -60,8 +60,10 @@ class FPlugin {
     if (isDesktop()) return Future<bool>.value(true);
     // ios crash Supported orientations has no common orientation with the application
     bool? changed = await FplayerPlatform.instance.setOrientationPortrait();
-    SystemChrome.setPreferredOrientations(
-        [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     return Future.value(changed ?? false);
   }
 
@@ -73,8 +75,10 @@ class FPlugin {
   static Future<bool> setOrientationLandscape() async {
     if (isDesktop()) return Future.value(false);
     bool? changed = await FplayerPlatform.instance.setOrientationLandscape();
-    SystemChrome.setPreferredOrientations(
-        [DeviceOrientation.landscapeRight, DeviceOrientation.landscapeLeft]);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+    ]);
     return Future.value(changed ?? false);
   }
 
@@ -110,8 +114,12 @@ class FPlugin {
   /// The range of [value] is [0.0, 1.0]
   static Future<void> setScreenBrightness(double value) {
     if (value < 0.0 || value > 1.0) {
-      return Future.error(ArgumentError.value(
-          value, "brightness value must be not null and in range [0.0, 1.0]"));
+      return Future.error(
+        ArgumentError.value(
+          value,
+          "brightness value must be not null and in range [0.0, 1.0]",
+        ),
+      );
     } else if (Platform.isAndroid || Platform.isIOS) {
       return FplayerPlatform.instance.setBrightness(value);
     }
@@ -155,8 +163,10 @@ class FPlugin {
   static void _onLoad(String type) {
     if (_eventSubs == null) {
       FLog.i("_onLoad $type");
-      _eventSubs = FplayerPlatform.instance.eventStream
-          .listen(FPlugin._eventListener, onError: FPlugin._errorListener);
+      _eventSubs = FplayerPlatform.instance.eventStream.listen(
+        FPlugin._eventListener,
+        onError: FPlugin._errorListener,
+      );
     }
     FplayerPlatform.instance.onLoad();
   }
@@ -165,7 +175,9 @@ class FPlugin {
   static void _onUnload() {
     FLog.i("_onUnload");
     FplayerPlatform.instance.onUnload();
-    _eventSubs?.cancel();
+    final subscription = _eventSubs;
+    _eventSubs = null;
+    subscription?.cancel();
   }
 
   static void _eventListener(dynamic event) {

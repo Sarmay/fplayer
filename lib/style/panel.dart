@@ -1,14 +1,21 @@
 part of fplayer;
 
 /// Default builder generate default [FPanel] UI
-Widget defaultFPanelBuilder(FPlayer player, FData data, BuildContext context,
-    Size viewSize, Rect texturePos, Color color) {
+Widget defaultFPanelBuilder(
+  FPlayer player,
+  FData data,
+  BuildContext context,
+  Size viewSize,
+  Rect texturePos,
+  Color color,
+) {
   return _DefaultFPanel(
-      player: player,
-      buildContext: context,
-      viewSize: viewSize,
-      texturePos: texturePos,
-      color: color);
+    player: player,
+    buildContext: context,
+    viewSize: viewSize,
+    texturePos: texturePos,
+    color: color,
+  );
 }
 
 /// Default Panel Widget
@@ -89,12 +96,14 @@ class _DefaultFPanelState extends State<_DefaultFPanel> {
     player.addListener(_playerValueChanged);
 
     _currentPosSubs = player.onCurrentPosUpdate.listen((v) {
+      if (!mounted) return;
       setState(() {
         _currentPos = v;
       });
     });
 
     _bufferPosSubs = player.onBufferPosUpdate.listen((v) {
+      if (!mounted) return;
       setState(() {
         _bufferPos = v;
       });
@@ -102,6 +111,7 @@ class _DefaultFPanelState extends State<_DefaultFPanel> {
   }
 
   void _playerValueChanged() {
+    if (!mounted) return;
     FValue value = player.value;
     if (value.duration != _duration) {
       setState(() {
@@ -133,17 +143,18 @@ class _DefaultFPanelState extends State<_DefaultFPanel> {
 
   @override
   void dispose() {
-    super.dispose();
     _hideTimer?.cancel();
 
     player.removeListener(_playerValueChanged);
     _currentPosSubs?.cancel();
     _bufferPosSubs?.cancel();
+    super.dispose();
   }
 
   void _startHideTimer() {
     _hideTimer?.cancel();
     _hideTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
       setState(() {
         _hideStuff = true;
       });
@@ -180,8 +191,9 @@ class _DefaultFPanelState extends State<_DefaultFPanel> {
 
   AnimatedOpacity _buildBottomBar(BuildContext context) {
     double duration = _duration.inMilliseconds.toDouble();
-    double currentValue =
-        _seekPos > 0 ? _seekPos : _currentPos.inMilliseconds.toDouble();
+    double currentValue = _seekPos > 0
+        ? _seekPos
+        : _currentPos.inMilliseconds.toDouble();
     currentValue = min(currentValue, duration);
     currentValue = max(currentValue, 0);
     return AnimatedOpacity(
@@ -221,8 +233,9 @@ class _DefaultFPanelState extends State<_DefaultFPanel> {
                           setState(() {
                             player.seekTo(v.toInt());
                             FLog.d("seek to $v");
-                            _currentPos =
-                                Duration(milliseconds: _seekPos.toInt());
+                            _currentPos = Duration(
+                              milliseconds: _seekPos.toInt(),
+                            );
                             _seekPos = -1;
                           });
                         },
@@ -237,24 +250,24 @@ class _DefaultFPanelState extends State<_DefaultFPanel> {
                     padding: const EdgeInsets.only(right: 5.0, left: 5),
                     child: Text(
                       _duration2String(_duration),
-                      style: const TextStyle(
-                        fontSize: 14.0,
-                      ),
+                      style: const TextStyle(fontSize: 14.0),
                     ),
                   ),
 
             IconButton(
-              icon: Icon(widget.player.value.fullScreen
-                  ? Icons.fullscreen_exit
-                  : Icons.fullscreen),
+              icon: Icon(
+                widget.player.value.fullScreen
+                    ? Icons.fullscreen_exit
+                    : Icons.fullscreen,
+              ),
               padding: const EdgeInsets.only(left: 10.0, right: 10.0),
-//              color: Colors.transparent,
+              //              color: Colors.transparent,
               onPressed: () {
                 widget.player.value.fullScreen
                     ? player.exitFullScreen()
                     : player.enterFullScreen();
               },
-            )
+            ),
             //
           ],
         ),
@@ -264,8 +277,12 @@ class _DefaultFPanelState extends State<_DefaultFPanel> {
 
   @override
   Widget build(BuildContext context) {
-    Rect rect =
-        Rect.fromLTWH(0, 0, widget.viewSize.width, widget.viewSize.height);
+    Rect rect = Rect.fromLTWH(
+      0,
+      0,
+      widget.viewSize.width,
+      widget.viewSize.height,
+    );
     return Positioned.fromRect(
       rect: rect,
       child: GestureDetector(
@@ -285,39 +302,41 @@ class _DefaultFPanelState extends State<_DefaultFPanel> {
                     height: double.infinity,
                     width: double.infinity,
                     child: Center(
-                        child: _exception != null
-                            ? Text(
-                                _exception!,
-                                style: const TextStyle(
+                      child: _exception != null
+                          ? Text(
+                              _exception!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 25,
+                              ),
+                            )
+                          : (_prepared || player.state == FState.initialized)
+                          ? AnimatedOpacity(
+                              opacity: _hideStuff ? 0.0 : 0.7,
+                              duration: const Duration(milliseconds: 400),
+                              child: IconButton(
+                                iconSize: barHeight * 2,
+                                icon: Icon(
+                                  _playing ? Icons.pause : Icons.play_arrow,
                                   color: Colors.white,
-                                  fontSize: 25,
                                 ),
-                              )
-                            : (_prepared || player.state == FState.initialized)
-                                ? AnimatedOpacity(
-                                    opacity: _hideStuff ? 0.0 : 0.7,
-                                    duration: const Duration(milliseconds: 400),
-                                    child: IconButton(
-                                      iconSize: barHeight * 2,
-                                      icon: Icon(
-                                          _playing
-                                              ? Icons.pause
-                                              : Icons.play_arrow,
-                                          color: Colors.white),
-                                      padding: const EdgeInsets.only(
-                                          left: 10.0, right: 10.0),
-                                      onPressed: _playOrPause,
-                                    ),
-                                  )
-                                : SizedBox(
-                                    width: barHeight * 1.5,
-                                    height: barHeight * 1.5,
-                                    child: const CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation(
-                                        Colors.white,
-                                      ),
-                                    ),
-                                  )),
+                                padding: const EdgeInsets.only(
+                                  left: 10.0,
+                                  right: 10.0,
+                                ),
+                                onPressed: _playOrPause,
+                              ),
+                            )
+                          : SizedBox(
+                              width: barHeight * 1.5,
+                              height: barHeight * 1.5,
+                              child: const CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation(
+                                  Colors.white,
+                                ),
+                              ),
+                            ),
+                    ),
                   ),
                 ),
               ),

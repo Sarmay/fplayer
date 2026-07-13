@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'fplayer_method_channel.dart';
@@ -44,12 +42,14 @@ abstract class FplayerPlatform extends PlatformInterface {
 
   Future<bool?> setOrientationPortrait() {
     throw UnimplementedError(
-        'setOrientationPortrait() has not been implemented.');
+      'setOrientationPortrait() has not been implemented.',
+    );
   }
 
   Future<bool?> setOrientationLandscape() {
     throw UnimplementedError(
-        'setOrientationLandscape() has not been implemented.');
+      'setOrientationLandscape() has not been implemented.',
+    );
   }
 
   Future<void> setOrientationAuto() {

@@ -53,8 +53,9 @@ class FVolume {
 
   static final FVolume _instance = FVolume._();
 
-  static final _VolumeValueNotifier _notifier =
-      _VolumeValueNotifier(const FVolumeEvent(vol: 0, sui: false, type: 0));
+  static final _VolumeValueNotifier _notifier = _VolumeValueNotifier(
+    const FVolumeEvent(vol: 0, sui: false, type: 0),
+  );
 
   static const double _defaultStep = 1.0 / 16.0;
 
@@ -71,8 +72,12 @@ class FVolume {
   /// return the system volume value after set.
   static Future<double> setVol(double vol) async {
     if (vol < 0.0 || vol > 1.0) {
-      return Future.error(ArgumentError.value(
-          vol, "step must be not null and in range [0.0, 1.0]"));
+      return Future.error(
+        ArgumentError.value(
+          vol,
+          "step must be not null and in range [0.0, 1.0]",
+        ),
+      );
     } else {
       var afterSet = await FplayerPlatform.instance.volumeSet(vol);
       if (afterSet != null) return Future.value(afterSet);
@@ -93,8 +98,12 @@ class FVolume {
   /// the return volume value may be not equals to the current volume + step.
   static Future<double> up({double step = _defaultStep}) async {
     if (step < 0.0 || step > 1.0) {
-      return Future.error(ArgumentError.value(
-          step, "step must be not null and in range [0.0, 1.0]"));
+      return Future.error(
+        ArgumentError.value(
+          step,
+          "step must be not null and in range [0.0, 1.0]",
+        ),
+      );
     } else {
       var vol = await FplayerPlatform.instance.volumeUp(step: step);
       if (vol != null) return Future.value(vol);
@@ -107,8 +116,12 @@ class FVolume {
   /// the return volume value may be not equals to the current volume - step.
   static Future<double> down({double step = _defaultStep}) async {
     if (step < 0.0 || step > 1.0) {
-      return Future.error(ArgumentError.value(
-          step, "step must be not null and in range [0.0, 1.0]"));
+      return Future.error(
+        ArgumentError.value(
+          step,
+          "step must be not null and in range [0.0, 1.0]",
+        ),
+      );
     } else {
       var vol = await FplayerPlatform.instance.volumeDown(step: step);
       if (vol != null) return Future.value(vol);
@@ -120,8 +133,10 @@ class FVolume {
   /// mode can be one of
   /// {[hideUIWhenPlayable], [hideUIWhenPlaying], [neverShowUI], [alwaysShowUI]}
   static Future<void> setUIMode(int mode) {
-    if (mode < hideUIWhenPlayable || hideUIWhenPlayable > alwaysShowUI) {
-      return Future.error(ArgumentError.notNull("mode"));
+    if (mode < hideUIWhenPlayable || mode > alwaysShowUI) {
+      return Future.error(
+        ArgumentError.value(mode, "mode", "Must be between 0 and 3"),
+      );
     } else {
       return FplayerPlatform.instance.volUiMode(mode);
     }
@@ -195,6 +210,7 @@ class _FVolumeWatcherState extends State<FVolumeWatcher> {
   }
 
   void volChanged() {
+    if (!mounted) return;
     FVolumeEvent value = FVolume.value;
     _volController.add(value.vol);
     widget.watcher(value);
@@ -211,8 +227,7 @@ class _FVolumeWatcherState extends State<FVolumeWatcher> {
     if (active == false) {
       var entry = OverlayEntry(builder: (_) => widget);
       _entry = entry;
-      var overlay = Overlay.of(context);
-      if (overlay != null) overlay.insert(entry);
+      Overlay.of(context).insert(entry);
     }
     _timer = Timer(const Duration(milliseconds: 800), () {
       _entry?.remove();
@@ -221,9 +236,13 @@ class _FVolumeWatcherState extends State<FVolumeWatcher> {
 
   @override
   void dispose() {
-    super.dispose();
     FVolume.removeListener(volChanged);
+    _timer?.cancel();
+    _timer = null;
+    _entry?.remove();
+    _entry = null;
     _volController.close();
+    super.dispose();
   }
 
   @override
