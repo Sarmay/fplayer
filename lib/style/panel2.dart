@@ -372,9 +372,6 @@ class __FPanel2State extends State<_FPanel2> {
         if (_buffering == true) {
           _buffering = false; // 避免有可能出现已经播放时还在显示缓冲中
         }
-        if (_playing == false) {
-          _playing = true; // 避免播放在false时导致bug
-        }
       });
       if (_needClearSeekData) {
         widget.data.clearValue(FData._fViewPanelSeekto);
@@ -409,10 +406,6 @@ class __FPanel2State extends State<_FPanel2> {
     /// 视频卡顿回调
     _bufferingSubs = player.onBufferStateUpdate.listen((value) {
       if (!mounted) return;
-      print("视频加载中$value");
-      if (value == false && _playing == false) {
-        playOrPause();
-      }
       setState(() {
         _buffering = value;
       });
