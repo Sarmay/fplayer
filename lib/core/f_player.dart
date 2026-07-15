@@ -75,6 +75,7 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
 
   bool _buffering = false;
   bool _seeking = false;
+  Duration? _explicitPausePosition;
 
   /// return true if the player is buffering
   bool get isBuffering => _buffering;
@@ -288,6 +289,7 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
     await _nativeSetup.future;
     if (state == FState.idle || state == FState.initialized) {
       try {
+        _explicitPausePosition = null;
         FLog.i("$this invoke setDataSource $path");
         _dataSource = path;
         await _channel.invokeMethod("setDataSource", <String, dynamic>{
@@ -378,8 +380,19 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
         state == FState.paused ||
         state == FState.started ||
         value.state == FState.completed) {
-      FLog.i("$this invoke start");
-      await _channel.invokeMethod("start");
+      final resumePosition = state == FState.paused
+          ? _validResumePosition(_explicitPausePosition)
+          : null;
+      if (resumePosition != null) {
+        FLog.i("$this invoke start from $resumePosition");
+      } else {
+        FLog.i("$this invoke start");
+      }
+      await _channel.invokeMethod("start", <String, dynamic>{
+        if (resumePosition != null)
+          "resumePosition": resumePosition.inMilliseconds,
+      });
+      _explicitPausePosition = null;
     } else {
       FLog.e("$this invoke start invalid state:$state");
       return Future.error(StateError("call start on invalid state $state"));
@@ -389,6 +402,18 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
   Future<void> pause() async {
     await _nativeSetup.future;
     if (isPlayable()) {
+      var pausePosition = _currentPos;
+      try {
+        final nativePosition = await _channel.invokeMethod<int>(
+          "getCurrentPosition",
+        );
+        if (nativePosition != null && nativePosition >= 0) {
+          pausePosition = Duration(milliseconds: nativePosition);
+        }
+      } on PlatformException {
+        // 读取原生位置失败时使用最近一次位置回调值。
+      }
+      _explicitPausePosition = pausePosition;
       FLog.i("$this invoke pause");
       await _channel.invokeMethod("pause");
     } else {
@@ -405,6 +430,7 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
       FLog.e("$this invoke stop invalid state:$state");
       return Future.error(StateError("call stop on invalid state $state"));
     } else {
+      _explicitPausePosition = null;
       FLog.i("$this invoke stop");
       await _channel.invokeMethod("stop");
     }
@@ -416,6 +442,7 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
       FLog.e("$this invoke reset invalid state:$state");
       return Future.error(StateError("call reset on invalid state $state"));
     } else {
+      _explicitPausePosition = null;
       _callId += 1;
       int cid = _callId;
       FLog.i("$this invoke reset #$cid");
@@ -438,9 +465,25 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
       return Future.error(StateError("Non playable state $state"));
     } else {
       FLog.i("$this invoke seekTo msec:$msec");
+      if (state == FState.paused && _explicitPausePosition != null) {
+        _explicitPausePosition = Duration(milliseconds: msec);
+      }
       _seeking = true;
-      _channel.invokeMethod("seekTo", <String, dynamic>{"msec": msec});
+      await _channel.invokeMethod("seekTo", <String, dynamic>{"msec": msec});
     }
+  }
+
+  Duration? _validResumePosition(Duration? position) {
+    if (position == null ||
+        position <= Duration.zero ||
+        value.duration <= Duration.zero) {
+      return null;
+    }
+
+    final maxPosition = value.duration > const Duration(seconds: 1)
+        ? value.duration - const Duration(seconds: 1)
+        : value.duration;
+    return position > maxPosition ? maxPosition : position;
   }
 
   /// Release native player. Release memory and resource
@@ -542,6 +585,12 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
             );
           } else {
             _setValue(value.copyWith(state: fpState, exception: fException));
+          }
+          if (fpState == FState.completed ||
+              fpState == FState.stopped ||
+              fpState == FState.error ||
+              fpState == FState.idle) {
+            _explicitPausePosition = null;
           }
         }
         break;

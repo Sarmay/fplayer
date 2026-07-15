@@ -438,6 +438,11 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
             handleEvent(PLAYBACK_STATE_CHANGED, asyncPreparing, -1, null);
             result.success(null);
         } else if (call.method.equals("start")) {
+            final Number resumePosition = call.argument("resumePosition");
+            if (resumePosition != null && resumePosition.longValue() > 0 && mState == paused) {
+                Log.i("FIJKPLAYER", "resume from position " + resumePosition.longValue());
+                mIjkMediaPlayer.seekTo(resumePosition.longValue());
+            }
             mIjkMediaPlayer.start();
             result.success(null);
         } else if (call.method.equals("pause")) {
