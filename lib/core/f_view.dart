@@ -157,6 +157,7 @@ class _FViewState extends State<FView> {
   int _textureId = -1;
   bool _fullScreen = false;
   bool _isSettingUpTexture = false;
+  PageRoute<void>? _fullScreenRoute;
 
   final FData _fData = FData();
   ValueNotifier<int> paramNotifier = ValueNotifier(0);
@@ -195,7 +196,7 @@ class _FViewState extends State<FView> {
     }
   }
 
-  void _fValueListener() async {
+  void _fValueListener() {
     if (!mounted) return;
     FValue value = widget.player.value;
     if (value.prepared && _textureId < 0) {
@@ -204,11 +205,9 @@ class _FViewState extends State<FView> {
 
     if (widget.fs) {
       if (value.fullScreen && !_fullScreen) {
-        _fullScreen = true;
-        await _pushFullScreenWidget(context);
+        unawaited(_pushFullScreenWidget(context));
       } else if (_fullScreen && !value.fullScreen) {
-        Navigator.of(context).pop();
-        _fullScreen = false;
+        _dismissFullScreenRoute();
       }
     }
   }
@@ -216,6 +215,8 @@ class _FViewState extends State<FView> {
   @override
   void dispose() {
     widget.player.removeListener(_fValueListener);
+
+    _dismissFullScreenRoute(immediately: true);
 
     var brightness = _fData.getValue(FData._fViewPanelBrightness);
     if (brightness != null && brightness is double) {
@@ -262,38 +263,78 @@ class _FViewState extends State<FView> {
     return _defaultRoutePageBuilder(context, animation);
   }
 
-  Future<dynamic> _pushFullScreenWidget(BuildContext context) async {
-    final TransitionRoute<void> route = PageRouteBuilder<void>(
+  Future<void> _pushFullScreenWidget(BuildContext context) async {
+    if (_fullScreen || !mounted) return;
+
+    final player = widget.player;
+    final navigator = Navigator.of(context);
+    final orientation = MediaQuery.orientationOf(context);
+    final PageRoute<void> route = PageRouteBuilder<void>(
       settings: const RouteSettings(),
       pageBuilder: _fullScreenRoutePageBuilder,
     );
+    _fullScreenRoute = route;
+    setState(() {
+      _fullScreen = true;
+    });
 
-    final orientation = MediaQuery.orientationOf(context);
-    await SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.immersiveSticky,
-      overlays: [],
-    );
-    FLog.d("start enter fullscreen. orientation:$orientation");
+    bool restorePortrait = false;
+    try {
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      FLog.d("start enter fullscreen. orientation:$orientation");
 
-    // 根据视频宽高判断是否旋转屏幕
-    // 竖屏视频（高度 > 宽度）不旋转，其他视频旋转为横屏
-    Size? videoSize = widget.player.value.size;
-    bool isPortraitVideo =
-        videoSize != null && videoSize.height > videoSize.width;
-    if (!isPortraitVideo) {
-      await FPlugin.setOrientationLandscape();
+      if (!mounted || !player.value.fullScreen) return;
+
+      // 竖屏视频保持竖屏，横屏视频只在原页面为竖屏时负责转回竖屏。
+      final videoSize = player.value.size;
+      final isPortraitVideo =
+          videoSize != null && videoSize.height > videoSize.width;
+      if (!isPortraitVideo) {
+        restorePortrait = orientation == Orientation.portrait;
+        await FPlugin.setOrientationLandscape();
+      }
+
+      if (!mounted || !player.value.fullScreen) return;
+      await navigator.push(route);
+    } catch (error, stackTrace) {
+      FLog.e("enter fullscreen failed: $error\n$stackTrace");
+    } finally {
+      if (identical(_fullScreenRoute, route)) {
+        _fullScreenRoute = null;
+      }
+      if (player.value.fullScreen) {
+        player.exitFullScreen();
+      }
+      if (mounted && _fullScreen) {
+        setState(() {
+          _fullScreen = false;
+        });
+      }
+      try {
+        await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      } catch (error, stackTrace) {
+        FLog.e("restore system UI failed: $error\n$stackTrace");
+      }
+      if (restorePortrait) {
+        try {
+          await FPlugin.setOrientationPortrait();
+        } catch (error, stackTrace) {
+          FLog.e("restore portrait orientation failed: $error\n$stackTrace");
+        }
+      }
     }
+  }
 
-    if (!mounted) return;
-    await Navigator.of(context).push(route);
-    if (!mounted) return;
-    _fullScreen = false;
-    widget.player.exitFullScreen();
-    await SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.edgeToEdge,
-      overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom],
-    );
-    await FPlugin.setOrientationPortrait();
+  void _dismissFullScreenRoute({bool immediately = false}) {
+    final route = _fullScreenRoute;
+    final navigator = route?.navigator;
+    if (route == null || navigator == null || !route.isActive) return;
+
+    if (immediately || !route.isCurrent) {
+      navigator.removeRoute(route);
+    } else {
+      navigator.pop();
+    }
   }
 
   @override

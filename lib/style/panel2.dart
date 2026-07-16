@@ -349,6 +349,7 @@ class __FPanel2State extends State<_FPanel2> {
     _valController = StreamController.broadcast();
 
     var playerState = player.state;
+    _lastState = playerState;
     _prepared = player.value.prepared;
     _duration = player.value.duration;
     _currentPos = player.currentPos;
@@ -522,14 +523,15 @@ class __FPanel2State extends State<_FPanel2> {
     }
 
     /// 播放器状态变更回调
-    if (_lastState != valueState) {
-      widget.onVideoStateChange?.call(valueState, _buffering);
+    final stateChanged = _lastState != valueState;
+    if (stateChanged) {
       _lastState = valueState;
+      widget.onVideoStateChange?.call(valueState, _buffering);
     }
 
     /// 播放完成是否播放下一集
-    bool isPlayCompleted = valueState == FState.completed;
-    if (isPlayCompleted) {
+    final isPlayCompleted = valueState == FState.completed;
+    if (stateChanged && isPlayCompleted) {
       if (widget.isVideos && widget.videoList!.length - 1 > widget.videoIndex) {
         widget.onVideoEnd?.call();
       } else {
@@ -1307,7 +1309,7 @@ class __FPanel2State extends State<_FPanel2> {
         ),
       );
     }
-    return Column(
+    final panel = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         if (!lock)
@@ -1418,6 +1420,9 @@ class __FPanel2State extends State<_FPanel2> {
           ),
       ],
     );
+    if (!fullScreen) return panel;
+
+    return Padding(padding: MediaQuery.of(context).viewPadding, child: panel);
   }
 
   Widget buildLongPress() {
@@ -1659,11 +1664,14 @@ class __FPanel2State extends State<_FPanel2> {
 
   Widget buildStateless() {
     bool fullScreen = player.value.fullScreen;
+    final viewPadding = fullScreen
+        ? MediaQuery.of(context).viewPadding
+        : EdgeInsets.zero;
 
     Widget buildTopBar() {
       if (!fullScreen) return Container();
       return Container(
-        height: 80,
+        height: 80 + viewPadding.top,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0x88000000), Color(0x00000000)],
@@ -1672,7 +1680,12 @@ class __FPanel2State extends State<_FPanel2> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.only(top: 20),
+          padding: EdgeInsets.fromLTRB(
+            viewPadding.left + 8,
+            viewPadding.top + 20,
+            viewPadding.right + 8,
+            0,
+          ),
           child: Row(children: [buildBack(context), buildTitle()]),
         ),
       );
@@ -1879,6 +1892,7 @@ class __FPanel2State extends State<_FPanel2> {
         );
 
     if (player.value.fullScreen) {
+      final viewPadding = MediaQuery.of(context).viewPadding;
       return Stack(
         children: [
           SizedBox(
@@ -1887,8 +1901,8 @@ class __FPanel2State extends State<_FPanel2> {
             child: tipContent,
           ),
           Positioned(
-            top: 0,
-            left: 0,
+            top: viewPadding.top,
+            left: viewPadding.left,
             child: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () {

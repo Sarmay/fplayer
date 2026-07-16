@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sarmay_fplayer/fplayer.dart';
@@ -57,6 +58,10 @@ void main() {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
     setUp(() {
+      messenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async => null,
+      );
       messenger.setMockMethodCallHandler(pluginChannel, (call) async {
         if (call.method == 'createPlayer') return 7;
         return null;
@@ -68,6 +73,7 @@ void main() {
     });
 
     tearDown(() {
+      messenger.setMockMethodCallHandler(SystemChannels.platform, null);
       messenger.setMockMethodCallHandler(pluginChannel, null);
       messenger.setMockMethodCallHandler(playerChannel, null);
       messenger.setMockMessageHandler(eventChannelName, null);
@@ -107,7 +113,98 @@ void main() {
         await player.release();
       },
     );
+
+    testWidgets(
+      'keeps a single player view in fullscreen and restores it on back',
+      (tester) async {
+        const panelKey = Key('test-player-panel');
+        final player = FPlayer();
+        await player.id;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: FView(
+                player: player,
+                width: 320,
+                height: 180,
+                panelBuilder: (_, _, _, _, _, _) =>
+                    const SizedBox(key: panelKey),
+              ),
+            ),
+          ),
+        );
+
+        expect(find.byKey(panelKey, skipOffstage: false), findsOneWidget);
+
+        player.enterFullScreen();
+        await _pumpRouteFrames(tester);
+
+        expect(player.value.fullScreen, isTrue);
+        expect(find.byKey(panelKey, skipOffstage: false), findsOneWidget);
+
+        await tester.binding.handlePopRoute();
+        await _pumpRouteFrames(tester);
+
+        expect(player.value.fullScreen, isFalse);
+        expect(find.byKey(panelKey, skipOffstage: false), findsOneWidget);
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        await _pumpRouteFrames(tester);
+        await tester.runAsync(player.release);
+      },
+    );
+
+    testWidgets('removes the fullscreen route when FView is disposed', (
+      tester,
+    ) async {
+      final player = FPlayer();
+      await player.id;
+      final showPlayer = ValueNotifier<bool>(true);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ValueListenableBuilder<bool>(
+              valueListenable: showPlayer,
+              builder: (context, visible, _) {
+                if (!visible) {
+                  return const Text('player removed');
+                }
+                return FView(
+                  player: player,
+                  width: 320,
+                  height: 180,
+                  panelBuilder: (_, _, _, _, _, _) => const SizedBox(),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      player.enterFullScreen();
+      await _pumpRouteFrames(tester);
+      expect(player.value.fullScreen, isTrue);
+
+      showPlayer.value = false;
+      await _pumpRouteFrames(tester);
+
+      expect(player.value.fullScreen, isFalse);
+      expect(find.text('player removed'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await _pumpRouteFrames(tester);
+      showPlayer.dispose();
+      await tester.runAsync(player.release);
+    });
   });
+}
+
+Future<void> _pumpRouteFrames(WidgetTester tester) async {
+  for (var i = 0; i < 12; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
 }
 
 Future<void> _emitPlayerEvent(

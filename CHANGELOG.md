@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 1.1.17
+* Keep fullscreen controls inside display cutout and system gesture safe areas.
+* Fix fullscreen route cleanup so system back and view disposal restore the player reliably.
+* Trigger automatic next-episode playback only once per completed-state transition.
+
 ## 1.1.16
 * Upgrade the development baseline to Flutter 3.41, Dart 3.11, Java 17, and iOS 13.
 * Fix player view listener cleanup, HTTP header ordering, volume mode validation, and screenshot state cleanup.
