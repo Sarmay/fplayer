@@ -215,6 +215,16 @@ class _FPanel2 extends StatefulWidget {
 class __FPanel2State extends State<_FPanel2> {
   FPlayer get player => widget.player;
   Color get _color => widget.color;
+  VideoItem? get _currentVideoItem {
+    final items = widget.videoList;
+    if (!widget.isVideos ||
+        items == null ||
+        widget.videoIndex < 0 ||
+        widget.videoIndex >= items.length) {
+      return null;
+    }
+    return items[widget.videoIndex];
+  }
 
   Timer? _hideTimer;
   bool _hideStuff = true;
@@ -1106,8 +1116,8 @@ class __FPanel2State extends State<_FPanel2> {
             child: Row(
               children: <Widget>[
                 buildBack(context),
-                buildTitle(),
-                const Spacer(),
+                Expanded(child: buildTitle()),
+                const SizedBox(width: 8),
                 buildTimeNow(),
                 buildPower(),
                 // buildNetConnect(),
@@ -1564,22 +1574,52 @@ class __FPanel2State extends State<_FPanel2> {
   }
 
   Widget buildTitle() {
+    final videoTitle = _currentVideoItem?.title ?? '';
+    final title = widget.title.trim().isNotEmpty ? widget.title : videoTitle;
     return Text(
-      widget.isVideos
-          ? widget.videoList![widget.videoIndex].title
-          : widget.title,
-      style: const TextStyle(fontSize: 22, color: Color(0xFF787878)),
+      title,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFFF7F8FA),
+        shadows: [
+          Shadow(color: Color(0xB3000000), blurRadius: 4, offset: Offset(0, 1)),
+        ],
+      ),
     );
   }
 
   Widget buildSubTitle() {
-    return Container(
-      padding: const EdgeInsets.only(left: 55),
+    final videoItem = _currentVideoItem;
+    var subTitle = widget.subTitle.trim();
+    if (subTitle.isEmpty) {
+      subTitle = videoItem?.subTitle.trim() ?? '';
+    }
+    if (subTitle.isEmpty) {
+      subTitle = videoItem?.title ?? '';
+    }
+    if (subTitle.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 56, right: 8),
       child: Text(
-        widget.isVideos
-            ? widget.videoList![widget.videoIndex].subTitle
-            : widget.subTitle,
-        style: const TextStyle(fontSize: 14, color: Color(0xFF787878)),
+        subTitle,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: Color(0xCCFFFFFF),
+          shadows: [
+            Shadow(
+              color: Color(0x99000000),
+              blurRadius: 3,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1686,7 +1726,12 @@ class __FPanel2State extends State<_FPanel2> {
             viewPadding.right + 8,
             0,
           ),
-          child: Row(children: [buildBack(context), buildTitle()]),
+          child: Row(
+            children: [
+              buildBack(context),
+              Expanded(child: buildTitle()),
+            ],
+          ),
         ),
       );
     }

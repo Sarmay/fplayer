@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 1.1.18
+* Improve fullscreen title contrast and typography, with the drama name as the primary title and the episode as secondary text.
+* Keep long player titles and subtitles from colliding with fullscreen controls.
+
 ## 1.1.17
 * Keep fullscreen controls inside display cutout and system gesture safe areas.
 * Fix fullscreen route cleanup so system back and view disposal restore the player reliably.
