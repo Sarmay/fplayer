@@ -3,7 +3,7 @@
 [![pub package](https://img.shields.io/pub/v/sarmay_fplayer.svg)](https://pub.dartlang.org/packages/sarmay_fplayer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Flutter video player plugin for iOS and Android based on the maintained [fplayer-core](https://github.com/Sarmay/ijkplayer).
+A Flutter video player plugin for iOS and Android based on the maintained [fplayer-core](https://github.com/Sarmay/fplayer-core).
 
 ## Features 功能
 

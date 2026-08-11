@@ -5,6 +5,8 @@
 * Require the Android core release to pass 16KB ELF and AAR alignment verification.
 * Verify the release example APK keeps all native libraries and ZIP entries 16KB compatible.
 * Keep iOS on the separately validated CocoaPods `fplayer-core 1.0.4` release.
+* Ignore stale or duplicate native state callbacks after playback has already advanced.
+* Keep play and pause controls synchronized across prepare, pause, resume, reset, and source changes.
 
 ## 1.1.18
 * Improve fullscreen title contrast and typography, with the drama name as the primary title and the episode as secondary text.
