@@ -67,7 +67,7 @@ static atomic_int atomicId = 0;
 static const int idle = 0;
 static const int initialized = 1;
 static const int asyncPreparing = 2;
-static const int __attribute__((unused)) prepared = 3;
+static const int prepared = 3;
 static const int __attribute__((unused)) started = 4;
 static const int paused = 5;
 static const int completed = 6;
@@ -290,6 +290,32 @@ static int renderType = 0;
     }
 }
 
+- (BOOL)isStateRegression:(int)newState {
+    switch (_state) {
+    case idle:
+        return NO;
+    case initialized:
+        return NO;
+    case asyncPreparing:
+        return newState == initialized;
+    case prepared:
+    case started:
+    case paused:
+    case completed:
+        return newState == initialized || newState == asyncPreparing ||
+               newState == prepared;
+    case stopped:
+        return newState == initialized || newState == prepared;
+    case error:
+        return newState == initialized || newState == asyncPreparing ||
+               newState == prepared;
+    case end:
+        return newState != end;
+    default:
+        return NO;
+    }
+}
+
 - (void)handleEvent:(int)what
             andArg1:(int)arg1
             andArg2:(int)arg2
@@ -301,15 +327,24 @@ static int renderType = 0;
             @"duration" : @([_ijkMediaPlayer getDuration]),
         }];
         break;
-    case IJKMPET_PLAYBACK_STATE_CHANGED:
+    case IJKMPET_PLAYBACK_STATE_CHANGED: {
+        if (arg1 == _state) {
+            break;
+        }
+        if ([self isStateRegression:arg1]) {
+            NSLog(@"ignore stale state %d after %d", arg1, _state);
+            break;
+        }
+        int oldState = _state;
         _state = arg1;
         [_eventSink success:@{
             @"event" : @"state_change",
             @"new" : @(arg1),
-            @"old" : @(arg2),
+            @"old" : @(oldState),
         }];
-        [self onStateChangedWithNew:arg1 andOld:arg2];
+        [self onStateChangedWithNew:arg1 andOld:oldState];
         break;
+    }
     case IJKMPET_VIDEO_RENDERING_START:
     case IJKMPET_AUDIO_RENDERING_START:
         [_eventSink success:@{
@@ -526,11 +561,11 @@ static int renderType = 0;
         }
     } else if ([@"prepareAsync" isEqualToString:call.method]) {
         [self setup];
-        [_ijkMediaPlayer prepareAsync];
         [self handleEvent:IJKMPET_PLAYBACK_STATE_CHANGED
                   andArg1:asyncPreparing
                   andArg2:-1
                  andExtra:nil];
+        [_ijkMediaPlayer prepareAsync];
         result(nil);
     } else if ([@"start" isEqualToString:call.method]) {
         int ret = [_ijkMediaPlayer start];

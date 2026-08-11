@@ -123,6 +123,32 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
     }
   }
 
+  bool _isStateRegression(FState nextState) {
+    switch (state) {
+      case FState.idle:
+        return false;
+      case FState.initialized:
+        return false;
+      case FState.asyncPreparing:
+        return nextState == FState.initialized;
+      case FState.prepared:
+      case FState.started:
+      case FState.paused:
+      case FState.completed:
+        return nextState == FState.initialized ||
+            nextState == FState.asyncPreparing ||
+            nextState == FState.prepared;
+      case FState.stopped:
+        return nextState == FState.initialized || nextState == FState.prepared;
+      case FState.error:
+        return nextState == FState.initialized ||
+            nextState == FState.asyncPreparing ||
+            nextState == FState.prepared;
+      case FState.end:
+        return nextState != FState.end;
+    }
+  }
+
   Future<dynamic> _handler(MethodCall call) {
     switch (call.method) {
       case "_onSnapshot":
@@ -556,18 +582,26 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
         break;
       case 'state_change':
         int newStateId = map['new'] ?? 0;
-        int _oldState = map['old'] ?? 0;
+        int oldStateId = map['old'] ?? 0;
         FState fpState = FState.values[newStateId];
-        FState oldState = (_oldState >= 0 && _oldState < FState.values.length)
-            ? FState.values[_oldState]
+        FState oldState = (oldStateId >= 0 && oldStateId < FState.values.length)
+            ? FState.values[oldStateId]
             : state;
 
-        if (fpState != oldState) {
-          FLog.i("$this state changed to $fpState <= $oldState");
+        if (_isStateRegression(fpState)) {
+          FLog.w(
+            "$this ignored stale state $fpState <= $oldState, current $state",
+          );
+          break;
+        }
+
+        if (fpState != state) {
+          FLog.i("$this state changed to $fpState <= $state");
           FException? fException = (fpState != FState.error)
               ? FException.noException
               : null;
-          if (newStateId == FState.prepared.index) {
+          if (newStateId >= FState.prepared.index &&
+              newStateId <= FState.completed.index) {
             _setValue(
               value.copyWith(
                 prepared: true,
