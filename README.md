@@ -30,7 +30,7 @@ dependencies:
 
 Requires Flutter 3.41 or newer and Dart 3.11 or newer.
 
-Android uses `io.github.sarmay:fplayer-core:1.1.0-sarmay.1`, requires Android
+Android uses `io.github.sarmay:fplayer-core:1.1.0-sarmay.2`, requires Android
 API 24 or newer, and ships 16KB page-size compatible native libraries. iOS
 continues to use the separately validated CocoaPods `fplayer-core 1.0.4` build.
 Publish and verify the Android core on Maven Central before tagging this wrapper;

@@ -26,7 +26,7 @@ Flutter video player plugin based on fplayer-core for Android and iOS.
 
   s.libraries = "bz2", "z", "stdc++"
 
-  # The controlled 1.1.0-sarmay.1 upgrade is Android-only.
+  # The controlled 1.1.0-sarmay.2 upgrade is Android-only.
   s.dependency 'fplayer-core', '1.0.4'
 
   s.ios.deployment_target = '13.0'

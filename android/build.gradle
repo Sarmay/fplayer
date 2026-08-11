@@ -50,6 +50,6 @@ dependencies {
     // implementation(name: 'fijkplayer-full-release', ext: 'aar')
 
     // fplayer-core includes the Java API and native libraries for armv7, arm64, x86, and x86_64.
-    implementation 'io.github.sarmay:fplayer-core:1.1.0-sarmay.1'
+    implementation 'io.github.sarmay:fplayer-core:1.1.0-sarmay.2'
     implementation 'androidx.annotation:annotation:1.2.0'
 }
