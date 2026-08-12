@@ -4,6 +4,7 @@
 * Add an iOS XCFramework with arm64 device and arm64/x86_64 simulator slices.
 * Fix black video textures after resetting or switching sources on Apple Silicon simulators.
 * Preserve and synchronize Flutter texture pixel buffers across playback and shutdown.
+* Link Swift compatibility libraries when the iOS plugin is used by Objective-C apps.
 * Upgrade the maintained Android core to `1.1.0-sarmay.3`.
 
 ## 1.1.19
