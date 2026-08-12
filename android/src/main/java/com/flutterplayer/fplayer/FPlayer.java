@@ -52,7 +52,6 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
     final private static int idle = 0;
     final private static int initialized = 1;
     final private static int asyncPreparing = 2;
-    @SuppressWarnings("unused")
     final private static int prepared = 3;
     @SuppressWarnings("unused")
     final private static int started = 4;
@@ -210,6 +209,30 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
         }
     }
 
+    private boolean isStateRegression(int newState) {
+        switch (mState) {
+            case idle:
+                return false;
+            case initialized:
+                return false;
+            case asyncPreparing:
+                return newState == initialized;
+            case prepared:
+            case started:
+            case paused:
+            case completed:
+                return newState == initialized || newState == asyncPreparing || newState == prepared;
+            case stopped:
+                return newState == initialized || newState == prepared;
+            case error:
+                return newState == initialized || newState == asyncPreparing || newState == prepared;
+            case end:
+                return newState != end;
+            default:
+                return false;
+        }
+    }
+
     private void handleEvent(int what, int arg1, int arg2, Object extra) {
         Map<String, Object> event = new HashMap<>();
 
@@ -220,14 +243,23 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
                 event.put("duration", duration);
                 mEventSink.success(event);
                 break;
-            case PLAYBACK_STATE_CHANGED:
+            case PLAYBACK_STATE_CHANGED: {
+                if (arg1 == mState) {
+                    break;
+                }
+                if (isStateRegression(arg1)) {
+                    Log.w("FIJKPLAYER", "ignore stale state " + arg1 + " after " + mState);
+                    break;
+                }
+                int oldState = mState;
                 mState = arg1;
                 event.put("event", "state_change");
                 event.put("new", arg1);
-                event.put("old", arg2);
-                onStateChanged(arg1, arg2);
+                event.put("old", oldState);
+                onStateChanged(arg1, oldState);
                 mEventSink.success(event);
                 break;
+            }
             case VIDEO_RENDERING_START:
             case AUDIO_RENDERING_START:
                 event.put("event", "rendering_start");
@@ -434,8 +466,8 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
             }
         } else if (call.method.equals("prepareAsync")) {
             setup();
-            mIjkMediaPlayer.prepareAsync();
             handleEvent(PLAYBACK_STATE_CHANGED, asyncPreparing, -1, null);
+            mIjkMediaPlayer.prepareAsync();
             result.success(null);
         } else if (call.method.equals("start")) {
             final Number resumePosition = call.argument("resumePosition");

@@ -1,5 +1,13 @@
 ## Unreleased
 
+## 1.1.19
+* Upgrade Android to the maintained `io.github.sarmay:fplayer-core:1.1.0-sarmay.2` artifact based on upstream core 1.1.0.
+* Require the Android core release to pass 16KB ELF verification, with final APK ZIP alignment checked in consumer CI.
+* Verify the release example APK keeps all native libraries and ZIP entries 16KB compatible.
+* Keep iOS on the separately validated CocoaPods `fplayer-core 1.0.4` release.
+* Ignore stale or duplicate native state callbacks after playback has already advanced.
+* Keep play and pause controls synchronized across prepare, pause, resume, reset, and source changes.
+
 ## 1.1.18
 * Improve fullscreen title contrast and typography, with the drama name as the primary title and the episode as secondary text.
 * Keep long player titles and subtitles from colliding with fullscreen controls.

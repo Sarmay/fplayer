@@ -1,5 +1,9 @@
 name: Flutter CI
 
+env:
+  ANDROID_NDK_VERSION: '28.2.13676358'
+  ANDROID_BUILD_TOOLS_VERSION: '35.0.0'
+
 on:
   push:
   pull_request:
@@ -9,9 +13,9 @@ jobs:
   analyze-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: '3.41.5'
           channel: stable
@@ -20,3 +24,43 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos
       - run: flutter test
+
+  android-example:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+
+      - name: Install Android verification toolchain
+        run: |
+          ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install \
+            "ndk;${ANDROID_NDK_VERSION}" \
+            "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" \
+            "platforms;android-36"
+          echo "ANDROID_NDK=${ANDROID_SDK_ROOT}/ndk/${ANDROID_NDK_VERSION}" >> "${GITHUB_ENV}"
+
+      - name: Verify core is available from Maven Central
+        run: |
+          curl --fail --show-error --silent \
+            --retry 12 --retry-all-errors --retry-delay 10 \
+            --head \
+            https://repo1.maven.org/maven2/io/github/sarmay/fplayer-core/1.1.0-sarmay.2/fplayer-core-1.1.0-sarmay.2.pom
+
+      - run: flutter pub get
+        working-directory: example
+      - run: flutter build apk --release --target-platform android-arm,android-arm64,android-x64
+        working-directory: example
+      - name: Verify consumer APK 16KB compatibility
+        env:
+          FPLAYER_EXPECTED_ABIS: arm64-v8a,armeabi-v7a,x86_64
+        run: bash tool/verify-android-16kb.sh example/build/app/outputs/flutter-apk/app-release.apk

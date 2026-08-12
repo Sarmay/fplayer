@@ -3,7 +3,7 @@
 [![pub package](https://img.shields.io/pub/v/sarmay_fplayer.svg)](https://pub.dartlang.org/packages/sarmay_fplayer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Flutter video player plugin for iOS and Android based on [fplayer-core](https://github.com/FlutterPlayer/ijkplayer).
+A Flutter video player plugin for iOS and Android based on the maintained [fplayer-core](https://github.com/Sarmay/fplayer-core).
 
 ## Features 功能
 
@@ -25,10 +25,16 @@ Add `sarmay_fplayer` as a dependency in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  sarmay_fplayer: ^1.1.15
+  sarmay_fplayer: ^1.1.19
 ```
 
 Requires Flutter 3.41 or newer and Dart 3.11 or newer.
+
+Android uses `io.github.sarmay:fplayer-core:1.1.0-sarmay.2`, requires Android
+API 24 or newer, and ships 16KB page-size compatible native libraries. iOS
+continues to use the separately validated CocoaPods `fplayer-core 1.0.4` build.
+Publish and verify the Android core on Maven Central before tagging this wrapper;
+the Android CI checks the public POM and the final release APK alignment.
 
 Or use git:
 

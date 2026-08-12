@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'sarmay_fplayer'
-  s.version          = '1.1.15'
+  s.version          = '1.1.19'
   s.summary          = 'Flutter video player plugin based on fplayer-core.'
   s.description      = <<-DESC
 Flutter video player plugin based on fplayer-core for Android and iOS.
@@ -26,6 +26,7 @@ Flutter video player plugin based on fplayer-core for Android and iOS.
 
   s.libraries = "bz2", "z", "stdc++"
 
+  # The controlled 1.1.0-sarmay.2 upgrade is Android-only.
   s.dependency 'fplayer-core', '1.0.4'
 
   s.ios.deployment_target = '13.0'

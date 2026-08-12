@@ -114,6 +114,109 @@ void main() {
       },
     );
 
+    test(
+      'ignores a delayed prepared state after playback has started',
+      () async {
+        messenger.setMockMethodCallHandler(playerChannel, (call) async => null);
+
+        final player = FPlayer();
+        await player.id;
+        await _emitPlayerEvent(messenger, eventChannelName, codec, {
+          'event': 'prepared',
+          'duration': 120000,
+        });
+        await _emitPlayerEvent(messenger, eventChannelName, codec, {
+          'event': 'state_change',
+          'new': FState.asyncPreparing.index,
+          'old': FState.initialized.index,
+        });
+        await _emitPlayerEvent(messenger, eventChannelName, codec, {
+          'event': 'state_change',
+          'new': FState.started.index,
+          'old': FState.prepared.index,
+        });
+        await _emitPlayerEvent(messenger, eventChannelName, codec, {
+          'event': 'state_change',
+          'new': FState.prepared.index,
+          'old': FState.asyncPreparing.index,
+        });
+
+        expect(player.state, FState.started);
+        expect(player.value.prepared, isTrue);
+        await player.release();
+      },
+    );
+
+    test(
+      'ignores delayed initialized and preparing states after playback starts',
+      () async {
+        messenger.setMockMethodCallHandler(playerChannel, (call) async => null);
+
+        final player = FPlayer();
+        await player.id;
+        await _emitPlayerEvent(messenger, eventChannelName, codec, {
+          'event': 'state_change',
+          'new': FState.initialized.index,
+          'old': FState.idle.index,
+        });
+        await _emitPlayerEvent(messenger, eventChannelName, codec, {
+          'event': 'state_change',
+          'new': FState.asyncPreparing.index,
+          'old': FState.initialized.index,
+        });
+        await _emitPlayerEvent(messenger, eventChannelName, codec, {
+          'event': 'state_change',
+          'new': FState.prepared.index,
+          'old': FState.asyncPreparing.index,
+        });
+        await _emitPlayerEvent(messenger, eventChannelName, codec, {
+          'event': 'state_change',
+          'new': FState.started.index,
+          'old': FState.prepared.index,
+        });
+
+        await _emitPlayerEvent(messenger, eventChannelName, codec, {
+          'event': 'state_change',
+          'new': FState.initialized.index,
+          'old': FState.idle.index,
+        });
+        await _emitPlayerEvent(messenger, eventChannelName, codec, {
+          'event': 'state_change',
+          'new': FState.asyncPreparing.index,
+          'old': FState.initialized.index,
+        });
+
+        expect(player.state, FState.started);
+        expect(player.value.prepared, isTrue);
+        await player.release();
+      },
+    );
+
+    test('does not move async preparing back to initialized', () async {
+      messenger.setMockMethodCallHandler(playerChannel, (call) async => null);
+
+      final player = FPlayer();
+      await player.id;
+      await _emitPlayerEvent(messenger, eventChannelName, codec, {
+        'event': 'state_change',
+        'new': FState.initialized.index,
+        'old': FState.idle.index,
+      });
+      await _emitPlayerEvent(messenger, eventChannelName, codec, {
+        'event': 'state_change',
+        'new': FState.asyncPreparing.index,
+        'old': FState.initialized.index,
+      });
+      await _emitPlayerEvent(messenger, eventChannelName, codec, {
+        'event': 'state_change',
+        'new': FState.initialized.index,
+        'old': FState.idle.index,
+      });
+
+      expect(player.state, FState.asyncPreparing);
+      await player.release();
+    });
+
     testWidgets(
       'keeps a single player view in fullscreen and restores it on back',
       (tester) async {
