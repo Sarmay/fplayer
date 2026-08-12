@@ -25,16 +25,16 @@ Add `sarmay_fplayer` as a dependency in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  sarmay_fplayer: ^1.1.19
+  sarmay_fplayer: ^1.1.20
 ```
 
 Requires Flutter 3.41 or newer and Dart 3.11 or newer.
 
-Android uses `io.github.sarmay:fplayer-core:1.1.0-sarmay.2`, requires Android
-API 24 or newer, and ships 16KB page-size compatible native libraries. iOS
-continues to use the separately validated CocoaPods `fplayer-core 1.0.4` build.
-Publish and verify the Android core on Maven Central before tagging this wrapper;
-the Android CI checks the public POM and the final release APK alignment.
+Android uses `io.github.sarmay:fplayer-core:1.1.0-sarmay.3`, requires Android
+API 24 or newer, and ships 16KB page-size compatible native libraries. iOS 13
+or newer uses the bundled `IJKMediaPlayer.xcframework`, including arm64 device
+and arm64/x86_64 simulator slices. The release CI verifies the public Android
+POM, final APK alignment, and the iOS simulator build.
 
 Or use git:
 

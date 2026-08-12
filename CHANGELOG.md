@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 1.1.20
+* Add an iOS XCFramework with arm64 device and arm64/x86_64 simulator slices.
+* Fix black video textures after resetting or switching sources on Apple Silicon simulators.
+* Preserve and synchronize Flutter texture pixel buffers across playback and shutdown.
+* Upgrade the maintained Android core to `1.1.0-sarmay.3`.
+
 ## 1.1.19
 * Upgrade Android to the maintained `io.github.sarmay:fplayer-core:1.1.0-sarmay.2` artifact based on upstream core 1.1.0.
 * Require the Android core release to pass 16KB ELF verification, with final APK ZIP alignment checked in consumer CI.
