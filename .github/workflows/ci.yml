@@ -54,7 +54,7 @@ jobs:
           curl --fail --show-error --silent \
             --retry 12 --retry-all-errors --retry-delay 10 \
             --head \
-            https://repo1.maven.org/maven2/io/github/sarmay/fplayer-core/1.1.0-sarmay.2/fplayer-core-1.1.0-sarmay.2.pom
+            https://repo1.maven.org/maven2/io/github/sarmay/fplayer-core/1.1.0-sarmay.3/fplayer-core-1.1.0-sarmay.3.pom
 
       - run: flutter pub get
         working-directory: example
@@ -64,3 +64,18 @@ jobs:
         env:
           FPLAYER_EXPECTED_ABIS: arm64-v8a,armeabi-v7a,x86_64
         run: bash tool/verify-android-16kb.sh example/build/app/outputs/flutter-apk/app-release.apk
+
+  ios-example:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter build ios --simulator --debug --no-codesign
+        working-directory: example
