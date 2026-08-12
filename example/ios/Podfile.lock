@@ -32,7 +32,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   battery_plus: b42253f6d2dde71712f8c36fef456d99121c5977
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  sarmay_fplayer: 8da9082df961c7519c5b16cf9adc84b4bd38538d
+  sarmay_fplayer: 5e1a0a434060bb49d0fbc8c3f9005209680423ba
   screen_brightness_ios: 212d950bb99c915eee971c884f4a6c87c92cd13d
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
 

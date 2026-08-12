@@ -33,4 +33,5 @@ Flutter video player plugin based on fplayer-core for Android and iOS.
 
   # Flutter.framework does not contain a i386 slice.
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
+  s.user_target_xcconfig = { 'OTHER_LDFLAGS' => '$(inherited) -Wl,-force_load_swift_libs' }
 end
