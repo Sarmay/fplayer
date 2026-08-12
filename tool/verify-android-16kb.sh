@@ -34,9 +34,14 @@ if [ ! -x "$ZIPALIGN" ]; then
     exit 1
 fi
 
-VERIFY_DIR=$(mktemp -d "${TMPDIR:-/tmp}/fplayer-apk-alignment.XXXXXX")
-trap 'rm -rf "$VERIFY_DIR"' EXIT
-unzip -oq "$APK_PATH" -d "$VERIFY_DIR"
+if ! ARCHIVE_ENTRIES=$(unzip -Z1 "$APK_PATH"); then
+    echo "Unable to list APK entries: $APK_PATH" >&2
+    exit 1
+fi
+if ! grep -q '^lib/' <<< "$ARCHIVE_ENTRIES"; then
+    echo "APK does not contain native libraries" >&2
+    exit 1
+fi
 
 EXPECTED_ABIS_CSV=${FPLAYER_EXPECTED_ABIS:-arm64-v8a,armeabi-v7a,x86_64}
 REQUIRED_LIBRARY_ABIS_CSV=${FPLAYER_REQUIRED_LIBRARY_ABIS:-$EXPECTED_ABIS_CSV}
@@ -46,7 +51,8 @@ REQUIRED_LIBRARIES=(libijkffmpeg.so libijkplayer.so libijksdl.so)
 
 EXPECTED_ABIS=$(printf '%s\n' "${ABIS[@]}" | sed '/^$/d' | LC_ALL=C sort -u)
 ACTUAL_ABIS=$(
-    find "$VERIFY_DIR/lib" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; |
+    printf '%s\n' "$ARCHIVE_ENTRIES" |
+        awk -F/ '$1 == "lib" && NF >= 3 && $2 != "" { print $2 }' |
         LC_ALL=C sort -u
 )
 if [ "$ACTUAL_ABIS" != "$EXPECTED_ABIS" ]; then
@@ -90,7 +96,8 @@ for ABI in "${ABIS[@]}"; do
     done
     if [ "$REQUIRE_CORE_LIBRARIES" -eq 1 ]; then
         for LIBRARY in "${REQUIRED_LIBRARIES[@]}"; do
-            if [ ! -f "$VERIFY_DIR/lib/$ABI/$LIBRARY" ]; then
+            ELF_RELATIVE_PATH="lib/$ABI/$LIBRARY"
+            if ! grep -Fxq "$ELF_RELATIVE_PATH" <<< "$ARCHIVE_ENTRIES"; then
                 echo "Missing native library: lib/$ABI/$LIBRARY" >&2
                 exit 1
             fi
@@ -98,11 +105,25 @@ for ABI in "${ABIS[@]}"; do
     fi
 
     ELF_COUNT=0
-    while IFS= read -r -d '' ELF_PATH; do
+    ELF_ENTRIES=$(
+        printf '%s\n' "$ARCHIVE_ENTRIES" |
+            awk -v prefix="lib/$ABI/" \
+                'index($0, prefix) == 1 && $0 ~ /\.so$/ { print }'
+    )
+    while IFS= read -r ELF_RELATIVE_PATH; do
+        if [ -z "$ELF_RELATIVE_PATH" ]; then
+            continue
+        fi
         ELF_COUNT=$((ELF_COUNT + 1))
-        ELF_RELATIVE_PATH=${ELF_PATH#"$VERIFY_DIR/"}
+        if ! ELF_METADATA=$(
+            unzip -p "$APK_PATH" "$ELF_RELATIVE_PATH" |
+                "$READELF" -hW -lW -
+        ); then
+            echo "Unable to inspect native library: $ELF_RELATIVE_PATH" >&2
+            exit 1
+        fi
         ELF_MACHINE=$(
-            "$READELF" -hW "$ELF_PATH" |
+            printf '%s\n' "$ELF_METADATA" |
                 awk -F: '/Machine:/ { sub(/^[[:space:]]+/, "", $2); print $2; exit }'
         )
         if [ "$ELF_MACHINE" != "$EXPECTED_MACHINE" ]; then
@@ -111,7 +132,7 @@ for ABI in "${ABIS[@]}"; do
         fi
 
         LOAD_ALIGNMENTS=$(
-            "$READELF" -lW "$ELF_PATH" |
+            printf '%s\n' "$ELF_METADATA" |
                 awk '$1 == "LOAD" { print $NF }'
         )
         if [ -z "$LOAD_ALIGNMENTS" ]; then
@@ -128,7 +149,7 @@ for ABI in "${ABIS[@]}"; do
         done <<< "$LOAD_ALIGNMENTS"
 
         echo "Verified ELF alignment: $ELF_RELATIVE_PATH"
-    done < <(find "$VERIFY_DIR/lib/$ABI" -type f -name '*.so' -print0)
+    done <<< "$ELF_ENTRIES"
 
     if [ "$ELF_COUNT" -eq 0 ]; then
         echo "No native libraries found for ABI: $ABI" >&2
@@ -136,5 +157,5 @@ for ABI in "${ABIS[@]}"; do
     fi
 done
 
-"$ZIPALIGN" -c -P 16 4 "$APK_PATH"
+"$ZIPALIGN" -c -P 16 -v 4 "$APK_PATH"
 echo "Verified 16KB ELF and APK alignment: $APK_PATH"
