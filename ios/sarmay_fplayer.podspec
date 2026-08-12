@@ -16,6 +16,7 @@ Flutter video player plugin based on fplayer-core for Android and iOS.
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
   s.vendored_frameworks = 'Frameworks/IJKMediaPlayer.xcframework'
+  s.preserve_paths = 'ThirdPartyNotices/**/*'
   s.dependency 'Flutter'
   s.platform = :ios, '13.0'
 
