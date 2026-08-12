@@ -28,7 +28,6 @@
 #import <Flutter/Flutter.h>
 #import <Foundation/Foundation.h>
 #import <IJKMediaPlayer/IJKMediaPlayer.h>
-#import <libkern/OSAtomic.h>
 #import <stdatomic.h>
 
 @interface FplayerPlugin ()
@@ -51,8 +50,8 @@ static atomic_int atomicId = 0;
     id<FlutterPluginRegistrar> _registrar;
     id<FlutterTextureRegistry> _textureRegistry;
 
-    CVPixelBufferRef volatile _latestPixelBuffer;
-    CVPixelBufferRef _lastBuffer;
+    CVPixelBufferRef _latestPixelBuffer;
+    BOOL _closed;
 
     int _width;
     int _height;
@@ -79,6 +78,21 @@ static int renderType = 0;
 
 // static int debugLeak = 0;
 
+- (void)applyRequiredPlayerOptions {
+    [_ijkMediaPlayer setOptionValue:@"fcc-bgra"
+                             forKey:@"overlay-format"
+                         ofCategory:kIJKFFOptionCategoryPlayer];
+    [_ijkMediaPlayer setOptionIntValue:0
+                                forKey:@"start-on-prepared"
+                            ofCategory:kIJKFFOptionCategoryPlayer];
+    [_ijkMediaPlayer setOptionIntValue:1
+                                forKey:@"enable-position-notify"
+                            ofCategory:kIJKFFOptionCategoryPlayer];
+    [_ijkMediaPlayer setOptionIntValue:1
+                                forKey:@"videotoolbox"
+                            ofCategory:kIJKFFOptionCategoryPlayer];
+}
+
 - (instancetype)initJustTexture {
     self = [super init];
     if (self) {
@@ -99,17 +113,15 @@ static int renderType = 0;
         _pid = pid;
         _eventSink = [[FQueuingEventSink alloc] init];
         _latestPixelBuffer = nil;
+        _closed = NO;
         _vid = -1;
         _rotate = -1;
         _state = 0;
 
         _hostOption = [[FHostOption alloc] init];
-        _lastBuffer = nil;
         if (renderType == 0) {
             _ijkMediaPlayer = [[IJKFFMediaPlayer alloc] init];
-            [_ijkMediaPlayer setOptionValue:@"fcc-bgra"
-                                     forKey:@"overlay-format"
-                                 ofCategory:kIJKFFOptionCategoryPlayer];
+            [self applyRequiredPlayerOptions];
         } else {
             // _ijkMediaPlayer = [[IJKFFMediaPlayer alloc] initWithFbo];
         }
@@ -117,16 +129,6 @@ static int renderType = 0;
         //    [_ijkMediaPlayer setLoop:0];
         //    [_ijkMediaPlayer setSpeed:4.0];
         //}
-
-        [_ijkMediaPlayer setOptionIntValue:0
-                                    forKey:@"start-on-prepared"
-                                ofCategory:kIJKFFOptionCategoryPlayer];
-        [_ijkMediaPlayer setOptionIntValue:1
-                                    forKey:@"enable-position-notify"
-                                ofCategory:kIJKFFOptionCategoryPlayer];
-        [_ijkMediaPlayer setOptionIntValue:1
-                                    forKey:@"videotoolbox"
-                                ofCategory:kIJKFFOptionCategoryPlayer];
 
         [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
 
@@ -161,6 +163,22 @@ static int renderType = 0;
 }
 
 - (void)shutdown {
+    id<FlutterTextureRegistry> textureRegistry;
+    int64_t textureId;
+    CVPixelBufferRef pixelBuffer;
+    @synchronized(self) {
+        if (_closed) {
+            return;
+        }
+        _closed = YES;
+        textureRegistry = _textureRegistry;
+        textureId = _vid;
+        pixelBuffer = _latestPixelBuffer;
+        _textureRegistry = nil;
+        _vid = -1;
+        _latestPixelBuffer = nil;
+    }
+
     [self handleEvent:IJKMPET_PLAYBACK_STATE_CHANGED
               andArg1:end
               andArg2:_state
@@ -169,24 +187,11 @@ static int renderType = 0;
         [_ijkMediaPlayer shutdown];
         _ijkMediaPlayer = nil;
     }
-    if (_vid >= 0) {
-        [_textureRegistry unregisterTexture:_vid];
-        _vid = -1;
-        _textureRegistry = nil;
+    if (textureId >= 0) {
+        [textureRegistry unregisterTexture:textureId];
     }
-
-    CVPixelBufferRef old = _latestPixelBuffer;
-    while (!OSAtomicCompareAndSwapPtrBarrier(old, nil,
-                                             (void **)&_latestPixelBuffer)) {
-        old = _latestPixelBuffer;
-    }
-    if (old) {
-        CFRelease(old);
-    }
-
-    if (_lastBuffer) {
-        CVPixelBufferRelease(_lastBuffer);
-        _lastBuffer = nil;
+    if (pixelBuffer != nil) {
+        CVPixelBufferRelease(pixelBuffer);
     }
     [_methodChannel setMethodCallHandler:nil];
     _methodChannel = nil;
@@ -212,52 +217,58 @@ static int renderType = 0;
 // IJKCVPBViewProtocol delegate
 // IJKFFMediaPlayer will incoke this method whem new frame should be displayed
 - (void)display_pixelbuffer:(CVPixelBufferRef)pixelbuffer {
-
-    if (_lastBuffer == nil) {
-        _lastBuffer = CVPixelBufferRetain(pixelbuffer);
-        CFRetain(pixelbuffer);
-    } else if (_lastBuffer != pixelbuffer) {
-        CVPixelBufferRelease(_lastBuffer);
-        _lastBuffer = CVPixelBufferRetain(pixelbuffer);
-        CFRetain(pixelbuffer);
+    if (pixelbuffer == nil) {
+        return;
+    }
+    @synchronized(self) {
+        if (!_closed && _latestPixelBuffer != pixelbuffer) {
+            CVPixelBufferRef previousPixelBuffer = _latestPixelBuffer;
+            _latestPixelBuffer = CVPixelBufferRetain(pixelbuffer);
+            if (previousPixelBuffer != nil) {
+                CVPixelBufferRelease(previousPixelBuffer);
+            }
+        }
     }
 
-    CVPixelBufferRef newBuffer = pixelbuffer;
-
-    CVPixelBufferRef old = _latestPixelBuffer;
-    while (!OSAtomicCompareAndSwapPtrBarrier(old, newBuffer,
-                                             (void **)&_latestPixelBuffer)) {
-        old = _latestPixelBuffer;
-    }
-
-    if (old && old != pixelbuffer) {
-        CFRelease(old);
-    }
-    if (_vid >= 0) {
-        [_textureRegistry textureFrameAvailable:_vid];
-    }
+    __weak FPlayer *weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+      FPlayer *strongSelf = weakSelf;
+      if (strongSelf == nil) {
+          return;
+      }
+      @synchronized(strongSelf) {
+          if (!strongSelf->_closed && strongSelf->_vid >= 0) {
+              [strongSelf->_textureRegistry
+                  textureFrameAvailable:strongSelf->_vid];
+          }
+      }
+    });
 }
 
 // After textureFrameAvailable has been called
 // Flutter engine call this to get new CVPixelBufferRef to render
 - (CVPixelBufferRef _Nullable)copyPixelBuffer {
-    CVPixelBufferRef pixelBuffer = _latestPixelBuffer;
-    while (!OSAtomicCompareAndSwapPtrBarrier(pixelBuffer, nil,
-                                             (void **)&_latestPixelBuffer)) {
-        pixelBuffer = _latestPixelBuffer;
+    @synchronized(self) {
+        if (_closed || _latestPixelBuffer == nil) {
+            return nil;
+        }
+        return CVPixelBufferRetain(_latestPixelBuffer);
     }
-    return pixelBuffer;
 }
 
 - (NSNumber *)setupSurface {
     [self setup];
-    if (_vid < 0) {
-        _textureRegistry = [_registrar textures];
-        int64_t vid = [_textureRegistry registerTexture:self];
-        _vid = vid;
-        [_ijkMediaPlayer setupCVPixelBufferView:self];
+    @synchronized(self) {
+        if (_closed) {
+            return @(-1);
+        }
+        if (_vid < 0) {
+            _textureRegistry = [_registrar textures];
+            _vid = [_textureRegistry registerTexture:self];
+            [_ijkMediaPlayer setupCVPixelBufferView:self];
+        }
+        return [NSNumber numberWithLongLong:_vid];
     }
-    return [NSNumber numberWithLongLong:_vid];
 }
 
 - (BOOL)isPlayable:(int)state {
@@ -583,6 +594,7 @@ static int renderType = 0;
         result(nil);
     } else if ([@"reset" isEqualToString:call.method]) {
         [_ijkMediaPlayer reset];
+        [self applyRequiredPlayerOptions];
         [self handleEvent:IJKMPET_PLAYBACK_STATE_CHANGED
                   andArg1:idle
                   andArg2:-1
