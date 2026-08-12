@@ -290,7 +290,15 @@ await player.setOption(FOption.playerCategory, "soundtouch", 1);
 
 ## iOS Note
 
-Note: The fplayer video player plugin may not function properly on iOS simulators. An iOS device is recommended for development and testing.
+Apple Silicon simulators are supported. When building with Xcode 26, enable
+dynamic CocoaPods frameworks in your app's `ios/Podfile`:
+
+```ruby
+target 'Runner' do
+  use_frameworks!
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+end
+```
 
 ## License 许可证
 
