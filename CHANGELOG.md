@@ -1,5 +1,8 @@
 ## Unreleased
 
+## 1.1.21
+* Preserve an optional native secondary error code in `FException` diagnostics.
+
 ## 1.1.20
 * Add an iOS XCFramework with arm64 device and arm64/x86_64 simulator slices.
 * Fix black video textures after resetting or switching sources on Apple Silicon simulators.

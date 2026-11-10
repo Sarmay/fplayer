@@ -299,15 +299,22 @@ class FException implements Exception {
   /// human readable exception message
   final String? message;
 
-  // const FException(code, [this.message]) : code = code;
+  /// Additional native error code, when provided by the platform.
+  final int? extraCode;
 
-  const FException(this.code, [this.message]);
+  const FException(this.code, [this.message, this.extraCode]);
 
   static FException fromPlatformException(PlatformException e) {
     int? code = int.tryParse(e.code);
+    final details = e.details;
+    final extraCode = details is int
+        ? details
+        : details is String
+        ? int.tryParse(details)
+        : null;
     return code != null
-        ? FException(code, e.message)
-        : FException(unknown, e.message);
+        ? FException(code, e.message, extraCode)
+        : FException(unknown, e.message, extraCode);
   }
 
   @override
@@ -318,11 +325,13 @@ class FException implements Exception {
           hashCode == other.hashCode;
 
   @override
-  int get hashCode => Object.hash(code, message);
+  int get hashCode => Object.hash(code, message, extraCode);
 
   @override
   String toString() {
-    return "FException($code, $message)";
+    return extraCode == null
+        ? "FException($code, $message)"
+        : "FException($code, $message, $extraCode)";
   }
 }
 

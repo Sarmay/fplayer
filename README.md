@@ -25,7 +25,7 @@ Add `sarmay_fplayer` as a dependency in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  sarmay_fplayer: ^1.1.20
+  sarmay_fplayer: ^1.1.21
 ```
 
 Requires Flutter 3.41 or newer and Dart 3.11 or newer.

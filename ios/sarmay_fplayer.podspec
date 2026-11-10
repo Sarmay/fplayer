@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'sarmay_fplayer'
-  s.version          = '1.1.20'
+  s.version          = '1.1.21'
   s.summary          = 'Flutter video player plugin based on fplayer-core.'
   s.description      = <<-DESC
 Flutter video player plugin based on fplayer-core for Android and iOS.
