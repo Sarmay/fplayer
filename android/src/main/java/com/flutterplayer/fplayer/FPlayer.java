@@ -95,8 +95,7 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
         } else {
             mIjkMediaPlayer = new IjkMediaPlayer();
             mIjkMediaPlayer.addIjkEventListener(this);
-            mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "enable-position-notify", 1);
-            mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", 0);
+            applyRequiredPlayerOptions();
 
             // IjkMediaPlayer.native_setLogLevel(IjkMediaPlayer.IJK_LOG_INFO);
             mMethodChannel = new MethodChannel(mEngine.messenger(), "befovy.com/fijkplayer/" + mPlayerId);
@@ -120,6 +119,14 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
 
     int getPlayerId() {
         return mPlayerId;
+    }
+
+    private void applyRequiredPlayerOptions() {
+        if (mIjkMediaPlayer == null) {
+            return;
+        }
+        mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "enable-position-notify", 1);
+        mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", 0);
     }
 
     void setup() {
@@ -372,16 +379,16 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
                         Object value = optionMap.get(key);
                         if (key instanceof String && cat != 0) {
                             String name = (String) key;
-                            if (value instanceof Integer) {
-                                mIjkMediaPlayer.setOption(cat, name, (Integer) value);
+                            if (value instanceof Number) {
+                                mIjkMediaPlayer.setOption(cat, name, ((Number) value).longValue());
                             } else if (value instanceof String) {
                                 mIjkMediaPlayer.setOption(cat, name, (String) value);
                             }
                         } else if (key instanceof String) {
                             // cat == 0, hostCategory
                             String name = (String) key;
-                            if (value instanceof Integer) {
-                                mHostOptions.addIntOption(name, (Integer) value);
+                            if (value instanceof Number) {
+                                mHostOptions.addIntOption(name, ((Number) value).intValue());
                             } else if (value instanceof String) {
                                 mHostOptions.addStrOption(name, (String) value);
                             }
@@ -402,12 +409,12 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
             Integer category = call.argument("cat");
             final String key = call.argument("key");
             if (call.hasArgument("long")) {
-                final Integer value = call.argument("long");
+                final Number value = call.argument("long");
                 if (category != null && category != 0) {
                     mIjkMediaPlayer.setOption(category, key, value != null ? value.longValue() : 0);
                 } else if (category != null) {
                     // cat == 0, hostCategory
-                    mHostOptions.addIntOption(key, value);
+                    mHostOptions.addIntOption(key, value != null ? value.intValue() : 0);
                 }
             } else if (call.hasArgument("str")) {
                 final String value = call.argument("str");
@@ -486,6 +493,7 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
             result.success(null);
         } else if (call.method.equals("reset")) {
             mIjkMediaPlayer.reset();
+            applyRequiredPlayerOptions();
             handleEvent(PLAYBACK_STATE_CHANGED, idle, -1, null);
             result.success(null);
         } else if (call.method.equals("getCurrentPosition")) {

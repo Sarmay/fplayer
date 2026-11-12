@@ -301,6 +301,72 @@ void main() {
       showPlayer.dispose();
       await tester.runAsync(player.release);
     });
+
+    test(
+      'normalizes reconnect options, clamps bufferPercent, and restores persistent options on reset',
+      () async {
+        final calls = <MethodCall>[];
+        messenger.setMockMethodCallHandler(playerChannel, (call) async {
+          calls.add(call);
+          return null;
+        });
+
+        final player = FPlayer();
+        await player.id;
+
+        await player.setOption(FOption.playerCategory, 'reconnect', 20);
+        await player.setOption(FOption.playerCategory, 'packet-buffering', 0);
+        await player.setOption(FOption.playerCategory, 'mediacodec', 1);
+        await player.setOption(FOption.playerCategory, 'seek-at-start', 542130);
+
+        final setOptionCalls = calls
+            .where((c) => c.method == 'setOption')
+            .toList();
+        expect(setOptionCalls[0].arguments, {
+          'cat': FOption.formatCategory,
+          'key': 'reconnect',
+          'long': 1,
+        });
+
+        await _emitPlayerEvent(messenger, eventChannelName, codec, {
+          'event': 'buffering',
+          'head': 541911,
+          'percent': 2819,
+        });
+        await _emitPlayerEvent(messenger, eventChannelName, codec, {
+          'event': 'pos',
+          'pos': 542130,
+        });
+        await _emitPlayerEvent(messenger, eventChannelName, codec, {
+          'event': 'freeze',
+          'value': true,
+        });
+
+        expect(player.bufferPercent, 100);
+        expect(player.bufferPos, const Duration(milliseconds: 541911));
+        expect(player.currentPos, const Duration(milliseconds: 542130));
+        expect(player.isBuffering, isTrue);
+
+        calls.clear();
+        await player.reset();
+
+        expect(player.bufferPercent, 0);
+        expect(player.bufferPos, Duration.zero);
+        expect(player.currentPos, Duration.zero);
+        expect(player.isBuffering, isFalse);
+
+        expect(calls.map((c) => c.method), ['reset', 'applyOptions']);
+        final restored =
+            calls.last.arguments as Map<Object?, Object?>;
+        expect(restored[FOption.formatCategory], {'reconnect': 1});
+        expect(restored[FOption.playerCategory], {
+          'packet-buffering': 0,
+          'mediacodec': 1,
+        });
+
+        await player.release();
+      },
+    );
   });
 }
 

@@ -93,7 +93,10 @@ class VideoScreenState extends State<VideoScreen> {
     await player.setOption(FOption.hostCategory, "enable-snapshot", 1);
     await player.setOption(FOption.hostCategory, "request-screen-on", 1);
     await player.setOption(FOption.hostCategory, "request-audio-focus", 1);
-    await player.setOption(FOption.playerCategory, "reconnect", 20);
+    await player.setOption(FOption.formatCategory, "reconnect", 1);
+    await player.setOption(FOption.formatCategory, "reconnect_streamed", 1);
+    await player.setOption(FOption.formatCategory, "reconnect_delay_max", 5);
+    await player.setOption(FOption.formatCategory, "timeout", 15000000);
     await player.setOption(FOption.playerCategory, "framedrop", 20);
     await player.setOption(FOption.playerCategory, "enable-accurate-seek", 1);
     await player.setOption(FOption.playerCategory, "mediacodec", 1);

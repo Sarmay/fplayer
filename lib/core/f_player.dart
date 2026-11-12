@@ -76,6 +76,25 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
   bool _buffering = false;
   bool _seeking = false;
   Duration? _explicitPausePosition;
+  final Map<int, Map<String, Object>> _savedOptions =
+      <int, Map<String, Object>>{};
+
+  static const Set<String> _booleanFormatOptions = <String>{
+    'reconnect',
+    'reconnect_streamed',
+    'reconnect_at_eof',
+  };
+  static const Set<String> _formatOnlyOptions = <String>{
+    'reconnect',
+    'reconnect_streamed',
+    'reconnect_at_eof',
+    'reconnect_delay_max',
+  };
+  static const Set<String> _ephemeralPlayerOptions = <String>{
+    'seek-at-start',
+    'start-on-prepared',
+    'cover-after-prepared',
+  };
 
   /// return true if the player is buffering
   bool get isBuffering => _buffering;
@@ -205,35 +224,96 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
         FState.completed == current;
   }
 
+  (int, Object) _normalizeOption(int category, String key, Object value) {
+    var targetCategory = category;
+    var targetValue = value;
+    if (targetCategory == FOption.playerCategory &&
+        _formatOnlyOptions.contains(key)) {
+      targetCategory = FOption.formatCategory;
+    }
+    if (targetCategory == FOption.formatCategory &&
+        _booleanFormatOptions.contains(key) &&
+        targetValue is int) {
+      targetValue = targetValue > 0 ? 1 : 0;
+    }
+    return (targetCategory, targetValue);
+  }
+
+  void _recordPersistentOption(int category, String key, Object value) {
+    if (category == FOption.hostCategory) return;
+    if (category == FOption.playerCategory &&
+        _ephemeralPlayerOptions.contains(key)) {
+      return;
+    }
+    (_savedOptions[category] ??= <String, Object>{})[key] = value;
+  }
+
   /// set option
   /// [value] must be int or String
   Future<void> setOption(int category, String key, dynamic value) async {
+    return _setOption(category, key, value, persist: true);
+  }
+
+  Future<void> _setOption(
+    int category,
+    String key,
+    dynamic value, {
+    required bool persist,
+  }) async {
     await _nativeSetup.future;
-    if (value is String) {
-      FLog.i("$this setOption k:$key, v:$value");
-      return _channel.invokeMethod("setOption", <String, dynamic>{
-        "cat": category,
-        "key": key,
-        "str": value,
-      });
-    } else if (value is int) {
-      FLog.i("$this setOption k:$key, v:$value");
-      return _channel.invokeMethod("setOption", <String, dynamic>{
-        "cat": category,
-        "key": key,
-        "long": value,
-      });
-    } else {
+    if (value is! String && value is! int) {
       FLog.e("$this setOption invalid value: $value");
       return Future.error(
         ArgumentError.value(value, "value", "Must be int or String"),
       );
     }
+    final (resolvedCategory, resolvedValue) = _normalizeOption(
+      category,
+      key,
+      value as Object,
+    );
+    if (persist) {
+      _recordPersistentOption(resolvedCategory, key, resolvedValue);
+    }
+    if (resolvedValue is String) {
+      FLog.i("$this setOption k:$key, v:$resolvedValue");
+      return _channel.invokeMethod("setOption", <String, dynamic>{
+        "cat": resolvedCategory,
+        "key": key,
+        "str": resolvedValue,
+      });
+    } else {
+      FLog.i("$this setOption k:$key, v:$resolvedValue");
+      return _channel.invokeMethod("setOption", <String, dynamic>{
+        "cat": resolvedCategory,
+        "key": key,
+        "long": resolvedValue,
+      });
+    }
   }
 
   Future<void> applyOptions(FOption fOption) async {
     await _nativeSetup.future;
-    return _channel.invokeMethod("applyOptions", fOption.data);
+    final normalized = <int, Map<String, dynamic>>{};
+    for (final categoryEntry in fOption.data.entries) {
+      for (final optionEntry in categoryEntry.value.entries) {
+        final rawValue = optionEntry.value;
+        if (rawValue is! String && rawValue is! int) continue;
+        final (resolvedCategory, resolvedValue) = _normalizeOption(
+          categoryEntry.key,
+          optionEntry.key,
+          rawValue as Object,
+        );
+        _recordPersistentOption(
+          resolvedCategory,
+          optionEntry.key,
+          resolvedValue,
+        );
+        (normalized[resolvedCategory] ??=
+            <String, dynamic>{})[optionEntry.key] = resolvedValue;
+      }
+    }
+    return _channel.invokeMethod("applyOptions", normalized);
   }
 
   Future<int?> setupSurface() async {
@@ -328,12 +408,22 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
         final headersStr = headers.entries
             .map((entry) => '${entry.key}: ${entry.value ?? ''}')
             .join('\r\n');
-        await setOption(FOption.formatCategory, 'headers', headersStr);
+        await _setOption(
+          FOption.formatCategory,
+          'headers',
+          headersStr,
+          persist: false,
+        );
       }
       if (autoPlay == true) {
         await start();
       } else if (showCover == true) {
-        await setOption(FOption.playerCategory, "cover-after-prepared", 1);
+        await _setOption(
+          FOption.playerCategory,
+          "cover-after-prepared",
+          1,
+          persist: false,
+        );
         await prepareAsync();
       }
     } else {
@@ -398,7 +488,12 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
       _callId += 1;
       int cid = _callId;
       FLog.i("$this invoke prepareAsync and start #$cid");
-      await setOption(FOption.playerCategory, "start-on-prepared", 1);
+      await _setOption(
+        FOption.playerCategory,
+        "start-on-prepared",
+        1,
+        persist: false,
+      );
       await _channel.invokeMethod("prepareAsync");
       FLog.i("$this invoke prepareAsync and start #$cid -> done");
     } else if (state == FState.asyncPreparing ||
@@ -469,12 +564,27 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
       return Future.error(StateError("call reset on invalid state $state"));
     } else {
       _explicitPausePosition = null;
+      _seeking = false;
+      _buffering = false;
+      _currentPos = const Duration();
+      _bufferPos = const Duration();
+      _bufferPercent = 0;
       _callId += 1;
       int cid = _callId;
       FLog.i("$this invoke reset #$cid");
       await _channel.invokeMethod("reset").then((_) {
         FLog.i("$this invoke reset #$cid -> done");
       });
+      if (_savedOptions.isNotEmpty) {
+        final snapshot = <int, Map<String, dynamic>>{
+          for (final entry in _savedOptions.entries)
+            if (entry.value.isNotEmpty)
+              entry.key: Map<String, dynamic>.from(entry.value),
+        };
+        if (snapshot.isNotEmpty) {
+          await _channel.invokeMethod("applyOptions", snapshot);
+        }
+      }
       _setValue(FValue.uninitialized().copyWith(fullScreen: value.fullScreen));
     }
   }
@@ -646,7 +756,10 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
         break;
       case 'buffering':
         int head = map['head'] ?? 0;
-        int percent = map['percent'] ?? 0;
+        int rawPercent = map['percent'] ?? 0;
+        int percent = rawPercent < 0
+            ? 0
+            : (rawPercent > 100 ? 100 : rawPercent);
         _bufferPos = Duration(milliseconds: head);
         _bufferPosController.add(_bufferPos);
         _bufferPercent = percent;

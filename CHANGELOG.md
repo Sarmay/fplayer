@@ -1,4 +1,5 @@
 ## Unreleased
+* Restore persistent player/format/codec/host options and required native player options across `reset()`, normalize HTTP reconnect options to `formatCategory`, and clamp `bufferPercent` to `0..100`.
 
 ## 1.1.21
 * Preserve an optional native secondary error code in `FException` diagnostics.
