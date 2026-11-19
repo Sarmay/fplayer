@@ -81,6 +81,7 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
     private TextureRegistry.SurfaceTextureEntry mSurfaceTextureEntry;
     private SurfaceTexture mSurfaceTexture;
     private Surface mSurface;
+    private boolean mReleased;
     final private boolean mJustSurface;
 
     FPlayer(@NonNull FEngine engine, boolean justSurface) {
@@ -129,17 +130,7 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
         mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", 0);
     }
 
-    void setup() {
-        if (mJustSurface)
-            return;
-        if (mHostOptions.getIntOption(HostOption.ENABLE_SNAPSHOT, 0) > 0) {
-            mIjkMediaPlayer.setAmcGlesRender();
-            mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "overlay-format", "fcc-_es2");
-        }
-    }
-
     long setupSurface() {
-        setup();
         if (mSurfaceTextureEntry == null) {
             TextureRegistry.SurfaceTextureEntry surfaceTextureEntry = mEngine.createSurfaceEntry();
             mSurfaceTextureEntry = surfaceTextureEntry;
@@ -160,8 +151,12 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
     }
 
     void release() {
+        if (mReleased)
+            return;
+        mReleased = true;
         if (!mJustSurface) {
             handleEvent(PLAYBACK_STATE_CHANGED, end, mState, null);
+            mIjkMediaPlayer.setSurface(null);
             mIjkMediaPlayer.release();
         }
         if (mSurfaceTextureEntry != null) {
@@ -401,6 +396,10 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
+        if (mReleased) {
+            result.success(null);
+            return;
+        }
         //noinspection IfCanBeSwitch
         if (call.method.equals("setupSurface")) {
             long viewId = setupSurface();
@@ -472,7 +471,6 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
                 result.error("-1162824012", "Local IOException:" + e.getMessage(), null);
             }
         } else if (call.method.equals("prepareAsync")) {
-            setup();
             handleEvent(PLAYBACK_STATE_CHANGED, asyncPreparing, -1, null);
             mIjkMediaPlayer.prepareAsync();
             result.success(null);
@@ -519,11 +517,7 @@ public class FPlayer implements MethodChannel.MethodCallHandler, IjkEventListene
             mIjkMediaPlayer.setSpeed(speed != null ? speed.floatValue() : 1.0f);
             result.success(null);
         } else if (call.method.equals("snapshot")) {
-            if (mHostOptions.getIntOption(HostOption.ENABLE_SNAPSHOT, 0) > 0) {
-                mIjkMediaPlayer.snapShot();
-            } else {
-                mMethodChannel.invokeMethod("_onSnapshot", "not support");
-            }
+            mMethodChannel.invokeMethod("_onSnapshot", "not support");
             result.success(null);
         } else {
             result.notImplemented();

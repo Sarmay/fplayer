@@ -114,6 +114,27 @@ void main() {
       },
     );
 
+    test('reports Android snapshot as unsupported', () async {
+      messenger.setMockMethodCallHandler(playerChannel, (call) async {
+        if (call.method == 'snapshot') {
+          await messenger.handlePlatformMessage(
+            playerChannel.name,
+            codec.encodeMethodCall(
+              const MethodCall('_onSnapshot', 'not support'),
+            ),
+            (_) {},
+          );
+        }
+        return null;
+      });
+
+      final player = FPlayer();
+      await player.id;
+
+      await expectLater(player.takeSnapShot(), throwsA(isA<UnsupportedError>()));
+      await player.release();
+    });
+
     test(
       'ignores a delayed prepared state after playback has started',
       () async {

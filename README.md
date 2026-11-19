@@ -30,7 +30,7 @@ dependencies:
 
 Requires Flutter 3.41 or newer and Dart 3.11 or newer.
 
-Android uses `io.github.sarmay:fplayer-core:1.1.0-sarmay.3`, requires Android
+Android uses `io.github.sarmay:fplayer-core:1.1.0-sarmay.4`, requires Android
 API 24 or newer, and ships 16KB page-size compatible native libraries. iOS 13
 or newer uses the bundled `IJKMediaPlayer.xcframework`, including arm64 device
 and arm64/x86_64 simulator slices. The release CI verifies the public Android
@@ -164,9 +164,11 @@ fPanelBuilder(
 
 ### Screenshot 截屏
 
+Android 当前禁用 native GLES 截屏路径，以避免部分 Mali 驱动在播放器释放期间发生崩溃。`takeSnapShot()` 在 Android 上会返回不支持；需要截屏时请在应用层使用安全的 Surface 捕获方案。
+
 ```dart
 fPanelBuilder(
-  isSnapShot: true,
+  isSnapShot: false,
 )
 ```
 

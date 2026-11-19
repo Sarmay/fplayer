@@ -1,3 +1,7 @@
+## 1.1.23
+* Disable the Android native GLES snapshot path and detach the player surface before native release to avoid Mali renderer lifecycle crashes.
+* Serialize native snapshot renderer access with the vout mutex and fix partial EGL/window cleanup.
+
 ## 1.1.22
 * Restore persistent player/format/codec/host options and required native player options across `reset()`, normalize HTTP reconnect options to `formatCategory`, and clamp `bufferPercent` to `0..100`.
 

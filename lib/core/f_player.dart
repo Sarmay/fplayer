@@ -322,12 +322,12 @@ class FPlayer extends ChangeNotifier implements ValueListenable<FValue> {
     return _channel.invokeMethod("setupSurface");
   }
 
-  /// Take snapshot (screen shot) of current playing video
+  /// Take a snapshot of the current playing video.
   ///
-  /// If you want to use [takeSnapshot], you must call
-  /// `player.setOption(FOption.hostCategory, "enable-snapshot", 1);`
-  /// after you create a [FPlayer].
-  /// Or else this method returns error.
+  /// Android currently returns [UnsupportedError] because the native GLES
+  /// snapshot path is disabled for renderer lifecycle safety. Use a platform
+  /// Surface capture implementation in the application when screenshots are
+  /// required.
   ///
   /// Example:
   /// ```
